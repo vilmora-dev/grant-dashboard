@@ -1,5 +1,5 @@
-import defaultTheme from 'tailwindcss/defaultTheme';
-import forms from '@tailwindcss/forms';
+import defaultTheme from 'tailwindcss/defaultTheme'
+import forms from '@tailwindcss/forms'
 
 /** @type {import('tailwindcss').Config} */
 export default {
@@ -13,10 +13,30 @@ export default {
     theme: {
         extend: {
             fontFamily: {
-                sans: ['Figtree', ...defaultTheme.fontFamily.sans],
+                sans:  ['IBM Plex Sans',  ...defaultTheme.fontFamily.sans],
+                serif: ['IBM Plex Serif', ...defaultTheme.fontFamily.serif],
+                mono:  ['IBM Plex Mono',  ...defaultTheme.fontFamily.mono],
+            },
+            colors: {
+                teal: {
+                    50:  '#def2f1',
+                    100: '#b2d8d8',
+                    200: '#8ec8c7',
+                    400: '#5a9090',
+                    500: '#3aafa9',
+                    600: '#2b9e99',
+                    700: '#2b6e6b',
+                    900: '#0d2b2b',
+                },
+                brand: {
+                    red:    '#d93050',
+                    orange: '#e06030',
+                    gold:   '#d4a017',
+                    green:  '#3aaf6b',
+                },
             },
         },
     },
 
     plugins: [forms],
-};
+}

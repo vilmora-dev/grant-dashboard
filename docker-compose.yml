@@ -44,7 +44,9 @@ services:
       - .:/var/www
     ports:
       - "5173:5173"
-    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host"
+    environment:
+      - VITE_HOST=0.0.0.0
+    command: sh -c "npm install --legacy-peer-deps && npm run dev -- --host 0.0.0.0"
     networks:
       - grants-net
 

@@ -6,20 +6,18 @@ use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
-    /**
-     * Run the migrations.
-     */
     public function up(): void
     {
         Schema::create('discarded_urls', function (Blueprint $table) {
             $table->id();
-            $table->timestamps();
+            $table->string('url', 767)->unique();
+            $table->string('reason', 200)->nullable();
+            $table->timestamp('discarded_at')->useCurrent();
         });
+
+        \DB::statement('CREATE INDEX idx_discarded_urls_url ON discarded_urls (url(255))');
     }
 
-    /**
-     * Reverse the migrations.
-     */
     public function down(): void
     {
         Schema::dropIfExists('discarded_urls');
