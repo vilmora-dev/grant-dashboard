@@ -37,13 +37,9 @@ class OrganizationProfileSeeder extends Seeder
                 'calfund.org',
                 'annenbergfoundation.org',
                 'rosehillsfoundation.org',
-                'grants.ca.gov',
                 'wildlife.ca.gov',
                 'cnra.ca.gov',
-                '350.org',
                 'climatejusticealliance.org',
-                'greenforall.org',
-                'cajuniorclimate.org',
             ],
         ]);
     }

@@ -14,22 +14,19 @@ import { useFilteredGrants } from '../../hooks/useFilteredGrants'
  * Receives `webGrants` and `govGrants` as Inertia props from GrantController::index().
  * All filtering, sorting, and modal state is managed client-side.
  */
-export default function GrantsIndex({ webGrants = [], govGrants = [] }) {
+export default function GrantsIndex({ grants = [] }) {
     const {
         filtered, filters, stats, sources,
         setSearch, setCashFilter, setAIFilter, setStatusFilter,
         setSourceFilter, setSortBy, setStarredOnly, resetFilters,
-    } = useFilteredGrants([webGrants, govGrants])
+    } = useFilteredGrants(grants)
 
     const [selected,       setSelected]       = useState(null)
     const [lastSelectedId, setLastSelectedId] = useState(null)
     const [viewMode,       setViewMode]       = useState('grid')
 
     // Local grants state so optimistic updates work without a page reload
-    const [localWeb, setLocalWeb] = useState(webGrants)
-    const [localGov, setLocalGov] = useState(govGrants)
-
-    const { filtered: localFiltered, stats: localStats, sources: localSources } = useFilteredGrants([localWeb, localGov])
+    const [localGrants, setLocalGrants] = useState(grants)
 
     function handleSelect(grant) {
         setLastSelectedId(grant._id)
@@ -37,11 +34,7 @@ export default function GrantsIndex({ webGrants = [], govGrants = [] }) {
     }
 
     const handleUpdate = useCallback((updated) => {
-        if (updated._table === 'grants_gov') {
-            setLocalGov(prev => prev.map(g => g.id === updated.id ? { ...g, ...updated } : g))
-        } else {
-            setLocalWeb(prev => prev.map(g => g.id === updated.id ? { ...g, ...updated } : g))
-        }
+        setLocalGrants(prev => prev.map(g => g.id === updated.id ? { ...g, ...updated } : g))
         if (selected?.id === updated.id) {
             setSelected(prev => ({ ...prev, ...updated }))
         }
@@ -49,11 +42,11 @@ export default function GrantsIndex({ webGrants = [], govGrants = [] }) {
 
     // Reuse filter hooks with the local (possibly updated) state
     const {
-        filtered: lf, filters: lFilters, stats: lStats, sources: lSources,
+        filtered: lf, filters: lFilters, stats: lStats, presentSources: lPresentSources,
         setSearch: lSetSearch, setCashFilter: lSetCash, setAIFilter: lSetAI,
         setStatusFilter: lSetStatus, setSourceFilter: lSetSource,
         setSortBy: lSetSort, setStarredOnly: lSetStarred, resetFilters: lReset,
-    } = useFilteredGrants([localWeb, localGov])
+    } = useFilteredGrants(localGrants)
 
     return (
         <>
@@ -64,7 +57,7 @@ export default function GrantsIndex({ webGrants = [], govGrants = [] }) {
                 onSearch={lSetSearch}
             >
                 <Controls
-                    sources={lSources}
+                    presentSources={lPresentSources}
                     filters={lFilters}
                     onCashFilter={lSetCash}
                     onAIFilter={lSetAI}

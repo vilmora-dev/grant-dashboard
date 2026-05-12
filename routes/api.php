@@ -6,6 +6,7 @@ use App\Http\Controllers\InitiativeController;
 use App\Http\Controllers\KeywordController;
 use App\Http\Controllers\OrganizationProfileController;
 use App\Http\Controllers\RescoreController;
+use App\Http\Controllers\StatsController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -45,3 +46,6 @@ Route::patch('/ddg-combos/{id}',     [DdgSearchComboController::class, 'update']
 
 // Rescore
 Route::post('/rescore',              RescoreController::class);
+
+// Stats / dashboard
+Route::get('/stats',                 [StatsController::class, 'index']);

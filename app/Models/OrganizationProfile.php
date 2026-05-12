@@ -14,7 +14,7 @@ class OrganizationProfile extends Model
     protected $fillable = [
         'name', 'website', 'founded_year', 'irs_status', 'mission', 'org_type',
         'target_states', 'target_counties', 'target_cities',
-        'budget_range', 'staff_count', 'volunteer_count', 'notes',
+        'budget_range', 'staff_count', 'volunteer_count',
         'ddg_searching', 'ddg_sites',
     ];
 

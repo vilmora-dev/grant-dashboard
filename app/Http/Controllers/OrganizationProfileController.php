@@ -48,7 +48,6 @@ class OrganizationProfileController extends Controller
             'budget_range'    => 'nullable|string',
             'staff_count'     => 'nullable|integer',
             'volunteer_count' => 'nullable|integer',
-            'notes'           => 'nullable|string',
             'ddg_searching'   => 'nullable|array',
             'ddg_sites'       => 'nullable|array',
         ]);

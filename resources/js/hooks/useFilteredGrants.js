@@ -11,23 +11,37 @@ const DEFAULT_FILTERS = {
     starredOnly:  false,
 }
 
+// Labels for each source value
+export const SOURCE_LABELS = {
+    grants_gov:       'Grants.gov',
+    ca_portal:        'CA Grants Portal',
+    simpler_grants:   'Simpler.Grants.gov',
+    fema:             'FEMA HMA',
+    terra_viva:       'Terra Viva Grants',
+    federal_register: 'Federal Register – EPA',
+    web:              'Web',
+}
+
+// Group sources by scrape_method for the dropdown
+export const SOURCE_GROUPS = {
+    rss: { label: 'RSS Feeds',   sources: ['terra_viva', 'federal_register'] },
+    api: { label: 'API Sources', sources: ['grants_gov', 'simpler_grants', 'ca_portal', 'fema'] },
+    web: { label: 'Web',         sources: ['web'] },
+}
+
 /**
- * Client-side filtering and sorting — mirrors useFilteredGrants.js in the Vite frontend.
+ * Client-side filtering and sorting for the unified grants table.
  *
- * @param {Array[]} rawSources  Array of arrays: [webGrants, govGrants]
+ * @param {Array} grants  Flat array of grant objects from grants_unified
  */
-export function useFilteredGrants(rawSources) {
+export function useFilteredGrants(grants = []) {
     const [filters, setFilters] = useState(DEFAULT_FILTERS)
 
-    // Merge all sources into one flat list
-    const all = useMemo(() => {
-        return rawSources.flat().filter(Boolean)
-    }, [rawSources])
+    const all = useMemo(() => grants.filter(Boolean), [grants])
 
-    // Unique source values for the source filter dropdown
-    const sources = useMemo(() => {
-        const vals = new Set(all.map(g => g.source || 'unknown').filter(Boolean))
-        return ['all', ...Array.from(vals).sort()]
+    // Collect which source values actually exist in the data (for dropdown)
+    const presentSources = useMemo(() => {
+        return new Set(all.map(g => g.source).filter(Boolean))
     }, [all])
 
     const filtered = useMemo(() => {
@@ -44,9 +58,9 @@ export function useFilteredGrants(rawSources) {
 
         // Cash filter
         if (filters.cashFilter === 'cash') {
-            list = list.filter(g => g.offers_cash || g.is_cash_grant)
+            list = list.filter(g => g.offers_cash)
         } else if (filters.cashFilter === 'nocash') {
-            list = list.filter(g => !g.offers_cash && !g.is_cash_grant)
+            list = list.filter(g => !g.offers_cash)
         }
 
         // AI filter
@@ -59,9 +73,13 @@ export function useFilteredGrants(rawSources) {
             list = list.filter(g => g.starred)
         }
 
-        // Source filter
+        // Source filter — supports both specific source and scrape_method group
         if (filters.sourceFilter !== 'all') {
-            list = list.filter(g => g.source === filters.sourceFilter)
+            if (['rss', 'api', 'web'].includes(filters.sourceFilter)) {
+                list = list.filter(g => g.scrape_method === filters.sourceFilter)
+            } else {
+                list = list.filter(g => g.source === filters.sourceFilter)
+            }
         }
 
         // Search
@@ -71,7 +89,8 @@ export function useFilteredGrants(rawSources) {
                 (g.title || '').toLowerCase().includes(q) ||
                 stripHtml(g.description || '').toLowerCase().includes(q) ||
                 (g.eligibility || '').toLowerCase().includes(q) ||
-                (g.source || '').toLowerCase().includes(q)
+                (g.agency_name || '').toLowerCase().includes(q) ||
+                (SOURCE_LABELS[g.source] || g.source || '').toLowerCase().includes(q)
             )
         }
 
@@ -119,7 +138,7 @@ export function useFilteredGrants(rawSources) {
     function resetFilters()     { setFilters(DEFAULT_FILTERS) }
 
     return {
-        filtered, filters, stats, sources,
+        filtered, filters, stats, presentSources,
         setSearch, setCashFilter, setAIFilter,
         setStatusFilter, setSourceFilter, setSortBy, setStarredOnly,
         resetFilters,

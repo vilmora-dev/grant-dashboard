@@ -12,6 +12,17 @@ import AppLayout from '../../Layouts/AppLayout'
  */
 
 // =================================================================
+// Priority labels — DB stores 1/2/3, we display High/Mid/Low
+// =================================================================
+
+const PRIORITY_LABELS = { 1: 'High', 2: 'Mid', 3: 'Low' }
+const PRIORITY_OPTIONS = [
+    { value: 1, label: 'High' },
+    { value: 2, label: 'Mid' },
+    { value: 3, label: 'Low' },
+]
+
+// =================================================================
 // Shared primitives
 // =================================================================
 
@@ -243,7 +254,7 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
     useState(() => { setLocalInitiatives(initiatives) }, [initiatives])
     useState(() => { setLocalKeywords(keywords) }, [keywords])
 
-    const emptyKw = { keyword: '', initiative_id: '', priority: 5 }
+    const emptyKw = { keyword: '', initiative_id: '', priority: 3 }
     const [kwForm,   setKwForm]   = useState(emptyKw)
     const [kwErr,    setKwErr]    = useState(null)
     const [kwBusy,   setKwBusy]   = useState(false)
@@ -299,7 +310,7 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
             const created = await apiCall('POST', '/api/keywords', {
                 keyword:      kwForm.keyword.trim(),
                 initiative_id: parseInt(kwForm.initiative_id),
-                priority:     parseInt(kwForm.priority) || 5,
+                priority:     parseInt(kwForm.priority) || 3,
             })
             setLocalKeywords(prev => [...prev, created])
             setKwForm(emptyKw)
@@ -414,7 +425,9 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                     <option value="">Select initiative…</option>
                     {localInitiatives.map(i => <option key={i.id} value={i.id}>{i.display_name}</option>)}
                 </Select>
-                <Input value={kwForm.priority} onChange={v => setKwForm(f => ({ ...f, priority: v }))} placeholder="priority" type="number" className="w-20" />
+                <Select value={kwForm.priority} onChange={v => setKwForm(f => ({ ...f, priority: parseInt(v) }))} className="w-24">
+                    {PRIORITY_OPTIONS.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                </Select>
                 <Btn onClick={handleCreateKw} disabled={kwBusy}><Plus size={13} /> Add</Btn>
             </div>
 
@@ -491,8 +504,16 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                         </div>
                                     </td>
 
-                                    {/* Priority — show first row's value */}
-                                    <td className="px-4 py-2.5 text-[#2b6e6b] align-top">{first.priority}</td>
+                                    {/* Priority — show label instead of raw number */}
+                                    <td className="px-4 py-2.5 align-top">
+                                        <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
+                                            first.priority === 1 ? 'bg-[#d93050]/8 border-[#d93050]/20 text-[#d93050]' :
+                                            first.priority === 2 ? 'bg-[#f59e0b]/8 border-[#f59e0b]/20 text-[#b45309]' :
+                                                                   'bg-[#3aafa9]/8 border-[#3aafa9]/20 text-[#2b6e6b]'
+                                        }`}>
+                                            {PRIORITY_LABELS[first.priority] ?? 'Low'}
+                                        </span>
+                                    </td>
 
                                     {/* Score — show first row's value */}
                                     <td className="px-4 py-2.5 align-top">
@@ -593,7 +614,6 @@ function OrgProfileTab({ orgProfile }) {
         target_states:   arrToStr(parseArr(p?.target_states)),
         target_counties: arrToStr(parseArr(p?.target_counties)),
         target_cities:   arrToStr(parseArr(p?.target_cities)),
-        notes:           p?.notes           || '',
         ddg_searching:   parseArr(p?.ddg_searching),
         ddg_sites:       parseArr(p?.ddg_sites),
     })
@@ -622,7 +642,6 @@ function OrgProfileTab({ orgProfile }) {
                 target_states:   strToArr(form.target_states),
                 target_counties: strToArr(form.target_counties),
                 target_cities:   strToArr(form.target_cities),
-                notes:           form.notes.trim() || null,
                 ddg_searching:   form.ddg_searching.length > 0 ? form.ddg_searching : null,
                 ddg_sites:       form.ddg_sites,
             })
@@ -679,7 +698,7 @@ function OrgProfileTab({ orgProfile }) {
 
             {/* Mission */}
             <div className="flex flex-col gap-4 mb-4">
-                <OrgField label="Mission statement" hint="shown to AI for context">
+                <OrgField label="Mission statement" hint="drives semantic mission filter">
                     <textarea
                         value={form.mission}
                         onChange={e => set('mission')(e.target.value)}
@@ -692,7 +711,7 @@ function OrgProfileTab({ orgProfile }) {
 
             {/* Geography */}
             <p className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090] mb-2 mt-2">
-                Grant geography — AI uses these to evaluate area relevance
+                Grant geography — used to evaluate area relevance
             </p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-xl">
                 <OrgField label="Target states" hint="comma-separated">
@@ -703,19 +722,6 @@ function OrgProfileTab({ orgProfile }) {
                 </OrgField>
                 <OrgField label="Target cities" hint="optional">
                     <Input value={form.target_cities} onChange={set('target_cities')} placeholder="Irvine, Santa Ana" />
-                </OrgField>
-            </div>
-
-            {/* Notes */}
-            <div className="mb-4">
-                <OrgField label="Additional notes" hint="passed verbatim to AI prompt">
-                    <textarea
-                        value={form.notes}
-                        onChange={e => set('notes')(e.target.value)}
-                        rows={2}
-                        placeholder="Any extra context the AI should know about this org…"
-                        className="w-full bg-[#def2f1] border border-[#b2d8d8] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#0d2b2b] placeholder-[#5a9090] outline-none focus:border-[#3aafa9] focus:shadow-[0_0_0_2px_rgba(58,175,169,0.12)] transition-all resize-y"
-                    />
                 </OrgField>
             </div>
 

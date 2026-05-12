@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, router, usePage } from '@inertiajs/react'
-import { Search, X, User, LayoutDashboard, Settings, LogOut, ChevronDown } from 'lucide-react'
+import { Search, X, User, LayoutDashboard, Settings, LogOut, ChevronDown, BarChart2 } from 'lucide-react'
 
 /**
  * AppLayout — sticky header + page slot.
@@ -181,6 +181,15 @@ export default function AppLayout({
                                                 >
                                                     <LayoutDashboard size={14} className="text-[#5a9090]" />
                                                     Dashboard
+                                                </Link>
+
+                                                <Link
+                                                    href="/stats"
+                                                    onClick={() => setAccountOpen(false)}
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#2b6e6b] hover:bg-[#def2f1] transition-colors"
+                                                >
+                                                    <BarChart2 size={14} className="text-[#5a9090]" />
+                                                    Graphs
                                                 </Link>
 
                                                 <Link

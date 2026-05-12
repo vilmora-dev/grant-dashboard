@@ -20,6 +20,11 @@ Route::get('/dashboard', [GrantController::class, 'index'])
     ->middleware(['auth', 'verified'])
     ->name('dashboard');
 
+// Stats / graphs dashboard
+Route::get('/stats', function () {
+    return Inertia::render('Stats/Index');
+})->middleware(['auth', 'verified'])->name('stats.index');
+
 // Config page — data passed inline, mutations go through /api/
 Route::get('/config', function () {
     return Inertia::render('Config/Index', [

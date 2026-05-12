@@ -1,8 +1,9 @@
 import { useState } from 'react'
+import { SOURCE_GROUPS, SOURCE_LABELS } from '../hooks/useFilteredGrants'
 import { LayoutGrid, SlidersHorizontal, RefreshCw, List, Star, Filter, X } from 'lucide-react'
 
 export default function Controls({
-    sources, filters,
+    presentSources, filters,
     onCashFilter, onAIFilter, onStatusFilter, onSourceFilter, onSort, onStarredFilter, onReset,
     viewMode, onViewModeChange,
 }) {
@@ -16,7 +17,7 @@ export default function Controls({
         || filters.statusFilter !== 'relevant'
         || filters.starredOnly  !== false
 
-    const selectCls = 'bg-[#def2f1] border border-[#b2d8d8] rounded-lg py-2 pl-3 pr-7 text-[12px] text-[#2b6e6b] outline-none cursor-pointer focus:border-[#3aafa9] transition-colors'
+    const selectCls = 'bg-[#def2f1] border border-[#b2d8d8] rounded-lg px-3 py-2 text-[12px] text-[#2b6e6b] outline-none cursor-pointer focus:border-[#3aafa9] transition-colors'
 
     const filterRows = (
         <div className="flex flex-col gap-3 w-full">
@@ -52,9 +53,16 @@ export default function Controls({
                 <span className="font-mono text-[10px] text-[#5a9090] uppercase tracking-widest">Source</span>
                 <select value={filters.sourceFilter} onChange={e => onSourceFilter(e.target.value)}
                     className={`w-full ${selectCls}`}>
-                    {sources.map(s => (
-                        <option key={s} value={s}>{s === 'all' ? 'All Sources' : s === 'duckduckgo' ? 'Web search' : s}</option>
-                    ))}
+                    <option value="all">All Sources</option>
+                    {Object.entries(SOURCE_GROUPS).map(([method, group]) =>
+                        group.sources.some(s => presentSources.has(s)) && (
+                            <optgroup key={method} label={group.label}>
+                                {group.sources.filter(s => presentSources.has(s)).map(s => (
+                                    <option key={s} value={s}>{SOURCE_LABELS[s] || s}</option>
+                                ))}
+                            </optgroup>
+                        )
+                    )}
                 </select>
             </div>
 
@@ -122,14 +130,23 @@ export default function Controls({
                     {/* Source select — native chevron */}
                     <select value={filters.sourceFilter} onChange={e => onSourceFilter(e.target.value)}
                         className={selectCls}>
-                        {sources.map(s => <option key={s} value={s}>{s === 'all' ? 'All Sources' : s === 'duckduckgo' ? 'Web search' : s}</option>)}
+                        <option value="all">All Sources</option>
+                        {Object.entries(SOURCE_GROUPS).map(([method, group]) =>
+                            group.sources.some(s => presentSources.has(s)) && (
+                                <optgroup key={method} label={group.label}>
+                                    {group.sources.filter(s => presentSources.has(s)).map(s => (
+                                        <option key={s} value={s}>{SOURCE_LABELS[s] || s}</option>
+                                    ))}
+                                </optgroup>
+                            )
+                        )}
                     </select>
 
                     {/* Sort select — keeps the SlidersHorizontal icon prefix via wrapper */}
                     <div className="relative flex items-center">
                         <SlidersHorizontal size={11} className="absolute left-2.5 text-[#5a9090] pointer-events-none z-10" />
                         <select value={filters.sortBy} onChange={e => onSort(e.target.value)}
-                            className={`${selectCls} pl-7`}>
+                            className={`${selectCls} px-7`}>
                             <option value="match">By Match %</option>
                             <option value="newest">Newest</option>
                             <option value="deadline">By Deadline</option>
@@ -150,7 +167,7 @@ export default function Controls({
 
                     {/* Status select — native chevron */}
                     <select value={filters.statusFilter} onChange={e => onStatusFilter(e.target.value)}
-                        className={selectCls}>
+                        className={`${selectCls} pr-7`}>
                         <option value="relevant">Relevant</option>
                         <option value="applied">Applied</option>
                         <option value="ignored">Ignored</option>
@@ -178,7 +195,7 @@ export default function Controls({
                     <div className="relative flex items-center">
                         <SlidersHorizontal size={11} className="absolute left-2.5 text-[#5a9090] pointer-events-none z-10" />
                         <select value={filters.sortBy} onChange={e => onSort(e.target.value)}
-                            className={`${selectCls} pl-7`}>
+                            className={`${selectCls} px-7`}>
                             <option value="match">By Match %</option>
                             <option value="newest">Newest</option>
                             <option value="deadline">By Deadline</option>

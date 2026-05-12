@@ -2,8 +2,7 @@
 
 namespace App\Http\Controllers;
 
-use App\Models\Grant;
-use App\Models\GrantGov;
+use App\Models\GrantUnified;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
@@ -11,32 +10,23 @@ class GrantController extends Controller
 {
     /**
      * GET /dashboard
-     * Render the grants dashboard with both tables passed as Inertia props.
+     * Render the grants dashboard with all grants from unified table.
      */
     public function index(Request $request)
     {
         $limit = (int) $request->query('limit', 500);
 
-        $webGrants = Grant::orderByDesc('scraped_at')
+        $grants = GrantUnified::orderByDesc('scraped_at')
             ->limit($limit)
             ->get()
             ->map(fn ($g) => array_merge($g->toArray(), [
-                '_id'    => 'web-' . $g->id,
-                '_table' => 'grants',
-            ]));
-
-        $govGrants = GrantGov::orderByDesc('scraped_at')
-            ->limit($limit)
-            ->get()
-            ->map(fn ($g) => array_merge($g->toArray(), [
-                '_id'      => 'gov-' . $g->id,
-                '_table'   => 'grants_gov',
-                'offers_cash' => $g->is_cash_grant,
+                '_id'      => 'grant-' . $g->id,
+                '_table'   => 'grants',
+                'offers_cash' => $g->offers_cash,
             ]));
 
         return Inertia::render('Grants/Index', [
-            'webGrants' => $webGrants,
-            'govGrants' => $govGrants,
+            'grants' => $grants,
         ]);
     }
 }
