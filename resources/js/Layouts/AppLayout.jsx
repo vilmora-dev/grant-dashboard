@@ -123,7 +123,7 @@ export default function AppLayout({
 
                     {/* Logo */}
                     <Link href="/dashboard" className="flex-shrink-0 flex items-center h-10">
-                        <img src="/delta-logo.png" alt="Logo" className="h-10 w-auto" />
+                        <img src="/delta-logo.webp" alt="Logo" className="h-10 w-auto" />
                     </Link>
 
                     {/* Mobile: search overlay */}

@@ -11,7 +11,7 @@ export default function GuestLayout({ children }) {
             <header className="sticky top-0 z-50 bg-[#C8EFE2] backdrop-blur-xl border-b border-black">
                 <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 py-3 flex items-center">
                     <Link href="/" className="flex items-center h-10 shrink-0">
-                        <img src="/delta-logo.png" alt="Logo" className="h-10 w-auto" />
+                        <img src="/delta-logo.webp" alt="Logo" className="h-10 w-auto" />
                     </Link>
                 </div>
             </header>
