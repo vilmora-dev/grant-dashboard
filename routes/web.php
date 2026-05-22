@@ -21,11 +21,11 @@ Route::post('/set-password', [SetPasswordController::class, 'store'])->middlewar
 
 // Grants dashboard
 Route::get('/dashboard', [GrantController::class, 'index'])
-    ->middleware(['auth', 'verified'])
+    ->middleware(['auth'])
     ->name('dashboard');
 
 // Full-access only pages
-Route::middleware(['auth', 'verified', 'full.access'])->group(function () {
+Route::middleware(['auth', 'full.access'])->group(function () {
 
     Route::get('/stats', function () {
         return Inertia::render('Stats/Index');
