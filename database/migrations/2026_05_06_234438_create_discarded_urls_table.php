@@ -15,7 +15,11 @@ return new class extends Migration
             $table->timestamp('discarded_at')->useCurrent();
         });
 
-        \DB::statement('CREATE INDEX idx_discarded_urls_url ON discarded_urls (url(255))');
+        // MySQL requires a prefix length for TEXT/VARCHAR(>191) indexes on InnoDB.
+        // SQLite does not support the url(N) prefix-length syntax, so guard this.
+        if (\DB::getDriverName() === 'mysql') {
+            \DB::statement('CREATE INDEX idx_discarded_urls_url ON discarded_urls (url(255))');
+        }
     }
 
     public function down(): void

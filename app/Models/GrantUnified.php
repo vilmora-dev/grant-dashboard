@@ -2,13 +2,18 @@
 
 namespace App\Models;
 
+use Database\Factories\GrantUnifiedFactory;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GrantUnified extends Model
 {
-    // Table renamed from grants_unified → grants (unified schema)
+    // Table renamed from grants_unified -> grants (unified schema)
     protected $table = 'grants';
+
+    /** @use HasFactory<GrantUnifiedFactory> */
+    use HasFactory;
 
     protected $fillable = [
         'title', 'url', 'description', 'summary', 'amount', 'deadline',
@@ -38,6 +43,8 @@ class GrantUnified extends Model
         'relevance_score' => 'integer',
         'scraped_at'      => 'datetime',
     ];
+
+    // -- Relationships --------------------------------------------------------
 
     public function actionLogs(): HasMany
     {

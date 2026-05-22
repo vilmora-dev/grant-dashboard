@@ -25,11 +25,14 @@ class UserFactory extends Factory
     public function definition(): array
     {
         return [
-            'name' => fake()->name(),
-            'email' => fake()->unique()->safeEmail(),
-            'email_verified_at' => now(),
-            'password' => static::$password ??= Hash::make('password'),
-            'remember_token' => Str::random(10),
+            'name'                 => fake()->name(),
+            'email'                => fake()->unique()->safeEmail(),
+            'email_verified_at'    => now(),
+            'password'             => static::$password ??= Hash::make('password'),
+            'remember_token'       => Str::random(10),
+            'role'                 => 'standard',
+            'is_active'            => true,
+            'must_change_password' => false,
         ];
     }
 
@@ -40,6 +43,50 @@ class UserFactory extends Factory
     {
         return $this->state(fn (array $attributes) => [
             'email_verified_at' => null,
+        ]);
+    }
+
+    /**
+     * Full-access user (can access Config, Stats, Team, and all admin API routes).
+     */
+    public function fullAccess(): static
+    {
+        return $this->state([
+            'role'                 => 'full',
+            'is_active'            => true,
+            'must_change_password' => false,
+        ]);
+    }
+
+    /**
+     * Standard-access user (dashboard only).
+     */
+    public function standardAccess(): static
+    {
+        return $this->state([
+            'role'                 => 'standard',
+            'is_active'            => true,
+            'must_change_password' => false,
+        ]);
+    }
+
+    /**
+     * User who must set a new password on first login.
+     */
+    public function mustChangePassword(): static
+    {
+        return $this->state([
+            'must_change_password' => true,
+        ]);
+    }
+
+    /**
+     * Deactivated user — cannot log in even with correct credentials.
+     */
+    public function inactive(): static
+    {
+        return $this->state([
+            'is_active' => false,
         ]);
     }
 }
