@@ -12,7 +12,7 @@ export default function Welcome({ auth }) {
 
                         {/* Logo */}
                         <Link href="/" className="flex items-center shrink-0">
-                            <img src="/delta-logo.png" alt="Logo" className="h-12 w-auto rounded" />
+                            <img src="/delta-logo.webp" alt="Logo" className="h-12 w-auto rounded" />
                         </Link>
 
                         {/* Nav */}
@@ -43,7 +43,7 @@ export default function Welcome({ auth }) {
 
                     {/* Background image */}
                     <img
-                        src="/forest.png"
+                        src="/forest.webp"
                         alt=""
                         aria-hidden="true"
                         className="absolute inset-0 w-full h-full object-cover object-center"
