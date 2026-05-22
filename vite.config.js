@@ -6,10 +6,19 @@ export default defineConfig({
     build: {
         rollupOptions: {
             output: {
-                manualChunks: {
-                    'vendor-react':    ['react', 'react-dom', 'react-is'],
-                    'vendor-inertia':  ['@inertiajs/react'],
-                    'vendor-recharts': ['recharts'],
+                manualChunks(id) {
+                    if (id.includes('node_modules/recharts') ||
+                        id.includes('node_modules/d3') ||
+                        id.includes('node_modules/victory-vendor')) {
+                        return 'vendor-recharts';
+                    }
+                    if (id.includes('node_modules/react-dom')) return 'vendor-react';
+                    if (id.includes('node_modules/react/') ||
+                        id.includes('node_modules/react-is') ||
+                        id.includes('node_modules/scheduler')) {
+                        return 'vendor-react';
+                    }
+                    if (id.includes('node_modules/@inertiajs')) return 'vendor-inertia';
                 },
             },
         },
