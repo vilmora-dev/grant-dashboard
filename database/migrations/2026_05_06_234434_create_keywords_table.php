@@ -12,7 +12,8 @@ return new class extends Migration
             $table->id();
             $table->string('keyword', 200);
             $table->foreignId('initiative_id')->nullable()->constrained('initiatives')->nullOnDelete();
-            $table->smallInteger('priority')->default(5);
+            $table->smallInteger('priority')->default(3);
+            // 1=High / 2=Mid / 3=Low
             $table->float('success_score')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
@@ -22,7 +23,6 @@ return new class extends Migration
             $table->unique(['keyword', 'initiative_id']);
         });
 
-        // Extra indexes
         \DB::statement('CREATE INDEX idx_keywords_initiative ON keywords (initiative_id)');
         \DB::statement('CREATE INDEX idx_keywords_active ON keywords (is_active)');
     }

@@ -4,15 +4,26 @@ import { Search, X, User, LayoutDashboard, Settings, LogOut, ChevronDown, BarCha
 
 /**
  * AppLayout — sticky header + page slot.
+ *
+ * Search model:
+ *   - `committedSearch` is the server-active search term (from URL/filters).
+ *   - `localValue` is the draft text in the input — updates on every keystroke,
+ *     never triggers a server call on its own.
+ *   - Search commits on Enter or the search button click.
+ *   - Escape blurs the input without clearing the draft text.
+ *   - The X button clears both local and committed search.
+ *   - When committedSearch changes externally (reset, browser back), localValue
+ *     syncs to match so they never diverge.
  */
 export default function AppLayout({
     stats = {},
-    search = '',
+    committedSearch = '',
     onSearch,
     children,
 }) {
     const { auth } = usePage().props
     const user = auth?.user
+    const isFullAccess = user?.role === 'full'
 
     const inputRef        = useRef(null)
     const searchWrapRef   = useRef(null)
@@ -21,13 +32,42 @@ export default function AppLayout({
     const [mobileSearchOpen, setMobileSearchOpen] = useState(false)
     const [accountOpen,      setAccountOpen]      = useState(false)
 
+    // Local draft — typing here does NOT hit the server
+    const [localValue, setLocalValue] = useState(committedSearch)
+
+    // Keep draft in sync if the committed search changes externally
+    useEffect(() => {
+        setLocalValue(committedSearch)
+    }, [committedSearch])
+
+    function commit(value) {
+        onSearch?.(value)
+    }
+
+    function handleKeyDown(e) {
+        if (e.key === 'Enter') {
+            commit(localValue)
+            inputRef.current?.blur()
+        }
+        if (e.key === 'Escape') {
+            inputRef.current?.blur()
+            // intentionally does NOT clear localValue
+        }
+    }
+
+    function handleClear() {
+        setLocalValue('')
+        commit('')
+        inputRef.current?.focus()
+    }
+
     function openMobileSearch() {
         setMobileSearchOpen(true)
         setTimeout(() => inputRef.current?.focus(), 50)
     }
     function closeMobileSearch() {
-        onSearch?.('')
         setMobileSearchOpen(false)
+        // does not clear search — user may want to reopen and keep their query
     }
 
     // Close mobile search on outside click
@@ -62,44 +102,63 @@ export default function AppLayout({
         ? user.name.split(' ').map(n => n[0]).join('').slice(0, 2).toUpperCase()
         : '?'
 
+    // When paginated: show "from–to" if the filtered set spans multiple pages,
+    // otherwise just show the count. Falls back gracefully if props are missing.
+    const shownVal = stats.shown != null
+        ? (stats.from && stats.to && stats.shown > 24
+            ? `${stats.from}–${stats.to}`
+            : stats.shown)
+        : '—'
+
     const statPills = [
-        { val: stats.total,   label: 'Total',   color: 'text-[#5a9090]' },
-        { val: stats.applied, label: 'Applied',  color: 'text-[#3aaf6b]' },
-        { val: stats.shown,   label: 'Shown',    color: 'text-[#2b6e6b]' },
+        { val: stats.total   ?? '—', label: 'Total',   color: 'text-[#233B22]' },
+        { val: stats.applied ?? '—', label: 'Applied',  color: 'text-[#006825]' },
+        { val: shownVal,             label: 'Shown',    color: 'text-[#072F98]' },
     ]
 
     return (
-        <div className="min-h-screen flex flex-col bg-white">
-            <header className="sticky top-0 z-50 bg-white/90 backdrop-blur-xl border-b border-[#b2d8d8]">
+        <div className="min-h-screen flex flex-col bg-[#C8EFE2]">
+            <header className="sticky top-0 z-50 bg-[#006825]/20 backdrop-blur-xl border-b border-[#C2E8DB]">
                 <div className="max-w-[1600px] mx-auto w-full px-4 md:px-8 py-3 flex items-center justify-between gap-3 md:gap-6">
 
                     {/* Logo */}
                     <Link href="/dashboard" className="flex-shrink-0 flex items-center h-10">
-                        <img src="/logo.svg" alt="Logo" className="h-8 w-auto" />
+                        <img src="/delta-logo.png" alt="Logo" className="h-10 w-auto" />
                     </Link>
 
                     {/* Mobile: search overlay */}
                     {mobileSearchOpen ? (
                         <div ref={searchWrapRef} className="flex flex-1 items-center gap-2 md:hidden">
                             <div className="relative flex-1">
-                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a9090] pointer-events-none" />
+                                <div className="absolute left-1.5 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                    {localValue && (
+                                        <button onClick={handleClear}
+                                            className="w-5 h-5 flex items-center justify-center rounded-full bg-[#FF9E00]/20 text-[#006825] hover:bg-[#FF9E00] hover:text-white">
+                                            <X size={11} strokeWidth={2.5} />
+                                        </button>
+                                    )}
+                                </div>
                                 <input
                                     ref={inputRef}
                                     type="text"
                                     placeholder="Search grants…"
-                                    value={search}
-                                    onChange={e => onSearch?.(e.target.value)}
-                                    className="w-full bg-[#def2f1] border border-[#3aafa9] rounded-lg pl-8 pr-7 py-2 text-[13px] text-[#0d2b2b] placeholder-[#5a9090] outline-none"
+                                    value={localValue}
+                                    onChange={e => setLocalValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="w-full bg-white border border-[#006825] rounded-lg px-8 py-2 text-[13px] text-[#233B22] placeholder-[#8A898C] outline-none"
                                 />
-                                {search && (
-                                    <button onClick={() => onSearch?.('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#c8eae9]/80 text-[#5a9090]">
-                                        <X size={11} strokeWidth={2.5} />
+                                
+                                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                    
+                                    <button
+                                        onClick={() => { commit(localValue); closeMobileSearch() }}
+                                        className="w-7 h-7 flex items-center justify-center rounded-md bg-[#006825] text-white">
+                                        <Search size={12} />
                                     </button>
-                                )}
+                                </div>
                             </div>
                             <button onClick={closeMobileSearch}
-                                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-[#def2f1] border border-[#b2d8d8] text-[#5a9090]">
+                                className="shrink-0 w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-[#C2E8DB] text-[#006825]">
                                 <X size={14} />
                             </button>
                         </div>
@@ -108,40 +167,57 @@ export default function AppLayout({
 
                             {/* Stat pills */}
                             <div className="flex gap-1.5 md:gap-2">
-                                <div className="hidden md:block w-px h-8 bg-[#b2d8d8]" />
+                                <div className="hidden md:block w-px h-8 bg-[#C2E8DB]" />
                                 {statPills.map(({ val, label, color }) => (
                                     <div key={label}
-                                        className="flex flex-col items-center bg-[#def2f1] border border-[#b2d8d8] rounded-md py-1 px-2 min-w-[36px] md:px-2.5 md:min-w-[42px]">
+                                        className="flex flex-col items-center bg-white border border-[#C2E8DB] rounded-md py-1 px-2 min-w-[36px] md:px-2.5 md:min-w-[42px]">
                                         <span className={`font-mono font-medium text-[12px] md:text-sm leading-none ${color}`}>{val ?? '—'}</span>
-                                        <span className="font-mono text-[#5a9090] uppercase tracking-wide mt-0.5 text-[8px] md:text-[9px]">{label}</span>
+                                        <span className="font-mono text-[#8A898C] uppercase tracking-wide mt-0.5 text-[8px] md:text-[9px]">{label}</span>
                                     </div>
                                 ))}
                             </div>
 
                             {/* Desktop search */}
-                            <div className="hidden md:block relative flex-1 min-w-[200px] max-w-[400px] focus-within:max-w-[480px] transition-all duration-300">
-                                <Search size={13} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-[#5a9090] pointer-events-none" />
+                            <div className="hidden md:flex items-center relative flex-1 min-w-[200px] max-w-[400px] focus-within:max-w-[480px] transition-all duration-300">
+                                <div className="absolute left-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                    {localValue && (
+                                        <button
+                                            onClick={handleClear}
+                                            title="Clear search"
+                                            className="w-5 h-5 flex items-center justify-center rounded-full bg-[#FF9E00]/20 text-[#006825] hover:bg-[#FF9E00] hover:text-white transition-colors">
+                                            <X size={11} strokeWidth={2.5} />
+                                        </button>
+                                    )}
+                                </div>
                                 <input
                                     ref={inputRef}
                                     type="text"
                                     placeholder="Search grants, sources, eligibility…"
-                                    value={search}
-                                    onChange={e => onSearch?.(e.target.value)}
-                                    className="w-full bg-[#def2f1] border border-[#b2d8d8] rounded-lg pl-8 pr-7 py-2 text-[13px] text-[#0d2b2b] placeholder-[#5a9090]
-                                               outline-none focus:border-[#3aafa9] focus:shadow-[0_0_0_3px_rgba(58,175,169,0.12)] transition-shadow"
+                                    value={localValue}
+                                    onChange={e => setLocalValue(e.target.value)}
+                                    onKeyDown={handleKeyDown}
+                                    className="w-full bg-white border border-[#C2E8DB] rounded-lg pl-7 pr-9 py-2 text-[13px] text-[#233B22] placeholder-[#8A898C]
+                                               outline-none focus:border-[#006825] focus:shadow-[0_0_0_3px_rgba(0,104,37,0.12)] transition-shadow"
                                 />
-                                {search && (
-                                    <button onClick={() => onSearch?.('')}
-                                        className="absolute right-2 top-1/2 -translate-y-1/2 w-5 h-5 flex items-center justify-center rounded-full bg-[#c8eae9]/80 text-[#5a9090]">
-                                        <X size={11} strokeWidth={2.5} />
+                                {/* Right-side controls: clear + search button */}
+                                <div className="absolute right-1 top-1/2 -translate-y-1/2 flex items-center gap-0.5">
+                                    <button
+                                        onClick={() => commit(localValue)}
+                                        title="Search (Enter)"
+                                        className={`w-7 h-7 flex items-center justify-center rounded-md transition-colors
+                                            ${committedSearch
+                                                ? 'bg-[#006825] text-white'
+                                                : 'bg-[#C8EFE2] text-[#006825] hover:bg-[#006825] hover:text-white'
+                                            }`}>
+                                        <Search size={12} />
                                     </button>
-                                )}
+                                </div>
                             </div>
 
-                            {/* Right — mobile search + account menu */}
+                            {/* Right - mobile search + account menu */}
                             <div className="flex items-center gap-2 shrink-0">
                                 <button onClick={openMobileSearch}
-                                    className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg bg-[#def2f1] border border-[#b2d8d8] text-[#5a9090]">
+                                    className="md:hidden w-8 h-8 flex items-center justify-center rounded-lg bg-white border border-[#C2E8DB] text-[#006825]">
                                     <Search size={15} />
                                 </button>
 
@@ -151,12 +227,12 @@ export default function AppLayout({
                                         onClick={() => setAccountOpen(o => !o)}
                                         className={`flex items-center gap-1.5 h-9 pl-1 pr-2 rounded-lg border transition-colors outline-none
                                             ${accountOpen
-                                                ? 'bg-[#3aafa9] border-[#3aafa9] text-white'
-                                                : 'bg-[#def2f1] border-[#b2d8d8] text-[#5a9090] hover:text-[#0d2b2b]'}`}
+                                                ? 'bg-[#006825] border-[#006825] text-white'
+                                                : 'bg-white border-[#C2E8DB] text-[#233B22] hover:text-[#006825]'}`}
                                     >
                                         {/* Avatar circle */}
                                         <span className={`w-7 h-7 rounded-md flex items-center justify-center font-mono text-[11px] font-semibold
-                                            ${accountOpen ? 'bg-white/20 text-white' : 'bg-[#b2d8d8] text-[#0d2b2b]'}`}>
+                                            ${accountOpen ? 'bg-white/20 text-white' : 'bg-[#C2E8DB] text-[#006825]'}`}>
                                             {initials}
                                         </span>
                                         <ChevronDown size={12} className={`transition-transform ${accountOpen ? 'rotate-180' : ''}`} />
@@ -164,12 +240,12 @@ export default function AppLayout({
 
                                     {/* Dropdown */}
                                     {accountOpen && (
-                                        <div className="absolute right-0 top-[calc(100%+6px)] w-52 bg-white border border-[#b2d8d8] rounded-xl shadow-[0_8px_32px_rgba(58,175,169,0.12)] overflow-hidden z-50">
+                                        <div className="absolute right-0 top-[calc(100%+6px)] w-52 bg-white border border-[#C2E8DB] rounded-xl shadow-[0_8px_32px_rgba(0,104,37,0.12)] overflow-hidden z-50">
 
                                             {/* User info */}
-                                            <div className="px-3 py-2.5 border-b border-[#e8f4f4]">
-                                                <p className="font-sans font-medium text-[13px] text-[#0d2b2b] truncate">{user?.name}</p>
-                                                <p className="font-mono text-[11px] text-[#5a9090] truncate">{user?.email}</p>
+                                            <div className="px-3 py-2.5 border-b border-[#C8EFE2]">
+                                                <p className="font-sans font-medium text-[13px] text-[#233B22] truncate">{user?.name}</p>
+                                                <p className="font-mono text-[11px] text-[#8A898C] truncate">{user?.email}</p>
                                             </div>
 
                                             {/* Menu items */}
@@ -177,42 +253,53 @@ export default function AppLayout({
                                                 <Link
                                                     href="/dashboard"
                                                     onClick={() => setAccountOpen(false)}
-                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#2b6e6b] hover:bg-[#def2f1] transition-colors"
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
                                                 >
-                                                    <LayoutDashboard size={14} className="text-[#5a9090]" />
+                                                    <LayoutDashboard size={14} className="text-[#8A898C]" />
                                                     Dashboard
                                                 </Link>
 
+                                                {isFullAccess && (<>
                                                 <Link
                                                     href="/stats"
                                                     onClick={() => setAccountOpen(false)}
-                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#2b6e6b] hover:bg-[#def2f1] transition-colors"
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
                                                 >
-                                                    <BarChart2 size={14} className="text-[#5a9090]" />
+                                                    <BarChart2 size={14} className="text-[#8A898C]" />
                                                     Graphs
                                                 </Link>
 
                                                 <Link
                                                     href="/config"
                                                     onClick={() => setAccountOpen(false)}
-                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#2b6e6b] hover:bg-[#def2f1] transition-colors"
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
                                                 >
-                                                    <Settings size={14} className="text-[#5a9090]" />
+                                                    <Settings size={14} className="text-[#8A898C]" />
                                                     Scraper Settings
                                                 </Link>
 
                                                 <Link
+                                                    href="/team"
+                                                    onClick={() => setAccountOpen(false)}
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
+                                                >
+                                                    <User size={14} className="text-[#8A898C]" />
+                                                    Team
+                                                </Link>
+                                                </>)}
+
+                                                <Link
                                                     href={route('profile.edit')}
                                                     onClick={() => setAccountOpen(false)}
-                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#2b6e6b] hover:bg-[#def2f1] transition-colors"
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
                                                 >
-                                                    <User size={14} className="text-[#5a9090]" />
+                                                    <User size={14} className="text-[#8A898C]" />
                                                     Account
                                                 </Link>
                                             </div>
 
                                             {/* Logout */}
-                                            <div className="border-t border-[#e8f4f4] py-1">
+                                            <div className="border-t border-[#C8EFE2] py-1">
                                                 <button
                                                     onClick={handleLogout}
                                                     className="w-full flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#d93050] hover:bg-[#d93050]/5 transition-colors"

@@ -16,8 +16,8 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status }
 
     return (
         <section>
-            <h2 className="font-serif font-semibold text-[16px] text-[#0d2b2b] mb-1">Profile Information</h2>
-            <p className="font-mono text-[12px] text-[#5a9090] mb-6">Update your name and email address.</p>
+            <h2 className="font-serif font-semibold text-[16px] text-[#233B22] mb-1">Profile Information</h2>
+            <p className="font-mono text-[12px] text-[#8A898C] mb-6">Update your name and email address.</p>
 
             <form onSubmit={submit} className="space-y-5">
                 <Field label="Name" error={errors.name}>
@@ -45,20 +45,20 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status }
                 </Field>
 
                 {mustVerifyEmail && user.email_verified_at === null && (
-                    <div className="rounded-lg border border-[#e06030]/30 bg-[#e06030]/5 px-4 py-3">
-                        <p className="font-mono text-[12px] text-[#e06030]">
+                    <div className="rounded-lg border border-[#FF7900]/30 bg-[#FF7900]/5 px-4 py-3">
+                        <p className="font-mono text-[12px] text-[#FF7900]">
                             Your email is unverified.{' '}
                             <Link
                                 href={route('verification.send')}
                                 method="post"
                                 as="button"
-                                className="underline hover:text-[#0d2b2b] transition-colors"
+                                className="underline hover:text-[#233B22] transition-colors"
                             >
                                 Resend verification email
                             </Link>
                         </p>
                         {status === 'verification-link-sent' && (
-                            <p className="mt-1 font-mono text-[12px] text-[#3aaf6b]">Verification link sent!</p>
+                            <p className="mt-1 font-mono text-[12px] text-[#006825]">Verification link sent!</p>
                         )}
                     </div>
                 )}
@@ -74,7 +74,7 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status }
                         leaveFrom="opacity-100"
                         leaveTo="opacity-0"
                     >
-                        <span className="font-mono text-[12px] text-[#3aaf6b]">Saved.</span>
+                        <span className="font-mono text-[12px] text-[#006825]">Saved.</span>
                     </Transition>
                 </div>
             </form>
@@ -85,20 +85,20 @@ export default function UpdateProfileInformationForm({ mustVerifyEmail, status }
 function Field({ label, error, children }) {
     return (
         <div>
-            <label className="block font-mono text-[11px] uppercase tracking-widest text-[#5a9090] mb-1.5">
+            <label className="block font-mono text-[11px] uppercase tracking-widest text-[#8A898C] mb-1.5">
                 {label}
             </label>
             {children}
-            {error && <p className="mt-1.5 font-mono text-[11px] text-[#d93050]">{error}</p>}
+            {error && <p className="mt-1.5 font-mono text-[11px] text-[#F5601D]">{error}</p>}
         </div>
     )
 }
 
 function inputCls(hasError) {
-    return `w-full bg-[#def2f1] border rounded-lg px-3 py-2 text-[13px] text-[#0d2b2b] font-sans
-            placeholder-[#5a9090] outline-none transition-shadow
-            focus:border-[#3aafa9] focus:shadow-[0_0_0_3px_rgba(58,175,169,0.12)]
-            ${hasError ? 'border-[#d93050]' : 'border-[#b2d8d8]'}`
+    return `w-full bg-white border rounded-lg px-3 py-2.5 text-[13px] text-[#233B22] font-sans
+            placeholder-[#8A898C] outline-none transition-shadow
+            focus:border-[#006825] focus:shadow-[0_0_0_3px_rgba(0,104,37,0.12)]
+            ${hasError ? 'border-[#F5601D]' : 'border-[#C2E8DB]'}`
 }
 
 function SaveButton({ children, disabled }) {
@@ -106,9 +106,9 @@ function SaveButton({ children, disabled }) {
         <button
             type="submit"
             disabled={disabled}
-            className="bg-[#3aafa9] hover:bg-[#2b9e99] disabled:opacity-60 text-white font-sans text-[13px]
+            className="bg-[#006825] hover:bg-[#005a1f] disabled:opacity-60 text-white font-sans text-[13px]
                        rounded-lg px-5 py-2 transition-colors outline-none
-                       focus:shadow-[0_0_0_3px_rgba(58,175,169,0.25)]"
+                       focus:shadow-[0_0_0_3px_rgba(0,104,37,0.25)]"
         >
             {children}
         </button>

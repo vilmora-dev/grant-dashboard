@@ -11,7 +11,7 @@ return new class extends Migration
         Schema::create('grants', function (Blueprint $table) {
             $table->id();
 
-            // ── Core shared fields ──────────────────────────────────────
+            // Core shared fields
             $table->string('title', 600);
             $table->string('url', 767)->unique();
             $table->text('description')->nullable();
@@ -21,27 +21,27 @@ return new class extends Migration
             $table->text('eligibility')->nullable();
             $table->string('search_query', 500)->nullable();
 
-            // ── Source tracking ─────────────────────────────────────────
+            // Source tracking
             $table->string('scrape_method', 20)->default('web')
                 ->comment('api | rss | web');
             $table->string('source', 50)->default('web')
                 ->comment('grants_gov | simpler_grants | ca_portal | fema | terra_viva | federal_register | web');
 
-            // ── User actions ────────────────────────────────────────────
+            // User actions
             $table->boolean('applied')->default(false);
             $table->boolean('ignore')->default(false);
             $table->boolean('starred')->default(false);
             $table->text('notes')->nullable();
             $table->string('discard_reason', 300)->nullable();
 
-            // ── Scoring & flags ─────────────────────────────────────────
+            // Scoring & flags
             $table->boolean('offers_cash')->default(true);
             $table->boolean('area_relevant')->default(true);
             $table->boolean('ai_analyzed')->default(false);
             $table->boolean('page_crawled')->default(false);
             $table->smallInteger('relevance_score')->default(0);
 
-            // ── Gov-specific fields (null for rss/web rows) ─────────────
+            // Gov-specific fields (null for rss/web rows)
             $table->string('opportunity_id', 50)->nullable()->unique();
             $table->string('opportunity_number', 100)->nullable();
             $table->string('agency_code', 50)->nullable();

@@ -28,7 +28,7 @@ class KeywordSeeder extends Seeder
             ['keyword' => 'climate AI',                 'initiative_id' => $ai, 'priority' => 1],
             ['keyword' => 'carbon verification',        'initiative_id' => $ai, 'priority' => 1],
             ['keyword' => 'nature-based solutions',     'initiative_id' => $ai, 'priority' => 2],
-            ['keyword' => 'environmental data',         'initiative_id' => $ai, 'priority' => 2],
+            ['keyword' => 'environmental technology',         'initiative_id' => $ai, 'priority' => 2],
             ['keyword' => 'climate technology',         'initiative_id' => $ai, 'priority' => 2],
             ['keyword' => 'carbon monitoring',          'initiative_id' => $ai, 'priority' => 2],
             ['keyword' => 'reporting and verification', 'initiative_id' => $ai, 'priority' => 3],
@@ -83,8 +83,6 @@ class KeywordSeeder extends Seeder
 
         // --- Cross-cutting keywords
         // Applied to all 4 initiatives. Kept tight — no duplicates of the same concept.
-        // Removed: antiracism, social justice, circular economy (too broad/off-mission),
-        //          underrepresented communities (covered by environmental justice framing).
         $crossCutting = [
             ['keyword' => 'environmental justice',   'priority' => 1],
             ['keyword' => 'climate adaptation',      'priority' => 1],

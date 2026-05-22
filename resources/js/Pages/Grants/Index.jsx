@@ -1,37 +1,40 @@
-import { useState, useCallback } from 'react'
-import { Head, router } from '@inertiajs/react'
-import { AlertCircle, Inbox, RefreshCw } from 'lucide-react'
+import { useState, useCallback, useEffect } from 'react'
+import { Head, router, usePage } from '@inertiajs/react'
+import { Inbox } from 'lucide-react'
 import AppLayout from '../../Layouts/AppLayout'
 import GrantCard from '../../Components/GrantCard'
 import Controls from '../../Components/Controls'
 import GrantModal from '../../Components/GrantModal'
-import ConfigPage from '../Config/Index'
-import { useFilteredGrants } from '../../hooks/useFilteredGrants'
+import Pagination from '../../Components/Pagination'
+import { useGrantFilters } from '../../hooks/useGrantFilters'
 
 /**
- * Grants/Index — the main grants dashboard.
+ * Grants/Index — server-paginated grants dashboard.
  *
- * Receives `webGrants` and `govGrants` as Inertia props from GrantController::index().
- * All filtering, sorting, and modal state is managed client-side.
+ * Inertia props:
+ *   grants         — array of 24 grant objects for the current page
+ *   meta           — { total, per_page, current_page, last_page, from, to }
+ *   counts         — { total, applied }  (full-table counts, not filtered)
+ *   presentSources — array of distinct source strings in the DB
+ *   filters        — server-echoed active filter values
  */
-export default function GrantsIndex({ grants = [] }) {
+export default function GrantsIndex() {
+    const { grants = [], meta = {}, counts = {}, presentSources = [] } = usePage().props
+
     const {
-        filtered, filters, stats, sources,
-        setSearch, setCashFilter, setAIFilter, setStatusFilter,
-        setSourceFilter, setSortBy, setStarredOnly, resetFilters,
-    } = useFilteredGrants(grants)
+        filters, setSearch,
+        setStatusFilter, setSourceFilter, setSortBy,
+        setStarredOnly, setPage, setMinScore, setDeadlineWindow, resetFilters,
+    } = useGrantFilters()
 
     const [selected,       setSelected]       = useState(null)
     const [lastSelectedId, setLastSelectedId] = useState(null)
     const [viewMode,       setViewMode]       = useState('grid')
 
-    // Local grants state so optimistic updates work without a page reload
+    // Optimistic update: when a grant is patched in the modal, update
+    // the local copy so the card reflects the change without a reload.
     const [localGrants, setLocalGrants] = useState(grants)
-
-    function handleSelect(grant) {
-        setLastSelectedId(grant._id)
-        setSelected(grant)
-    }
+    useEffect(() => { setLocalGrants(grants) }, [grants])
 
     const handleUpdate = useCallback((updated) => {
         setLocalGrants(prev => prev.map(g => g.id === updated.id ? { ...g, ...updated } : g))
@@ -40,56 +43,110 @@ export default function GrantsIndex({ grants = [] }) {
         }
     }, [selected])
 
-    // Reuse filter hooks with the local (possibly updated) state
-    const {
-        filtered: lf, filters: lFilters, stats: lStats, presentSources: lPresentSources,
-        setSearch: lSetSearch, setCashFilter: lSetCash, setAIFilter: lSetAI,
-        setStatusFilter: lSetStatus, setSourceFilter: lSetSource,
-        setSortBy: lSetSort, setStarredOnly: lSetStarred, resetFilters: lReset,
-    } = useFilteredGrants(localGrants)
+    function handleSelect(grant) {
+        setLastSelectedId(grant._id)
+        setSelected(grant)
+    }
+
+    // Thin top-bar progress indicator on Inertia navigations
+    const [loading, setLoading] = useState(false)
+    useEffect(() => {
+        const off1 = router.on('start',  () => setLoading(true))
+        const off2 = router.on('finish', () => setLoading(false))
+        return () => { off1(); off2() }
+    }, [])
+
+    // Stats for the AppLayout navbar pills
+    const navStats = {
+        total:   counts.total,
+        applied: counts.applied,
+        from:    meta.from,
+        to:      meta.to,
+        shown:   meta.total,   // total matching current filters
+    }
 
     return (
         <>
             <Head title="Grants Dashboard" />
-            <AppLayout
-                stats={lStats}
-                search={lFilters.search}
-                onSearch={lSetSearch}
-            >
+
+            {/* Loading bar */}
+            {loading && (
+                <div className="fixed top-0 left-0 right-0 z-[100] h-[2px] bg-[#C8EFE2] overflow-hidden">
+                    <div className="h-full bg-[#006825]"
+                        style={{ animation: 'loadbar 1.2s ease-in-out infinite' }} />
+                </div>
+            )}
+
+            <AppLayout stats={navStats} committedSearch={filters.search} onSearch={setSearch}>
                 <Controls
-                    presentSources={lPresentSources}
-                    filters={lFilters}
-                    onCashFilter={lSetCash}
-                    onAIFilter={lSetAI}
-                    onStatusFilter={lSetStatus}
-                    onSourceFilter={lSetSource}
-                    onSort={lSetSort}
-                    onStarredFilter={lSetStarred}
-                    onReset={lReset}
+                    presentSources={new Set(presentSources)}
+                    filters={filters}
+                    statusCounts={{
+                        relevant: counts.relevant,
+                        applied:  counts.applied,
+                        ignored:  counts.ignored,
+                    }}
+                    onStatusFilter={setStatusFilter}
+                    onSourceFilter={setSourceFilter}
+                    onSort={setSortBy}
+                    onStarredFilter={setStarredOnly}
+                    onMinScore={setMinScore}
+                    onDeadlineWindow={setDeadlineWindow}
+                    onReset={resetFilters}
                     viewMode={viewMode}
                     onViewModeChange={setViewMode}
                 />
 
-                {lf.length === 0 ? (
+                {localGrants.length === 0 ? (
                     <EmptyState
-                        hasFilters={lFilters.search || lFilters.cashFilter !== 'all' || lFilters.sourceFilter !== 'all'}
-                        onReset={lReset}
+                        hasFilters={
+                            filters.search ||
+                            filters.cashFilter   !== 'all' ||
+                            filters.sourceFilter !== 'all' ||
+                            filters.statusFilter !== 'relevant' ||
+                            filters.ai_analyzed  ||
+                            filters.starredOnly
+                        }
+                        onReset={resetFilters}
                     />
                 ) : viewMode === 'grid' ? (
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                        {lf.map((grant, i) => (
-                            <GrantCard
-                                key={grant._id}
-                                grant={grant}
-                                index={i}
-                                onSelect={() => handleSelect(grant)}
-                                isLastSelected={grant._id === lastSelectedId}
-                                onUpdate={handleUpdate}
-                            />
-                        ))}
-                    </div>
+                    <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                            {localGrants.map((grant) => (
+                                <GrantCard
+                                    key={grant._id}
+                                    grant={grant}
+                                    onSelect={() => handleSelect(grant)}
+                                    isLastSelected={grant._id === lastSelectedId}
+                                    onUpdate={handleUpdate}
+                                />
+                            ))}
+                        </div>
+                        <Pagination
+                            page={meta.current_page}
+                            totalPages={meta.last_page}
+                            totalItems={meta.total}
+                            from={meta.from}
+                            to={meta.to}
+                            setPage={setPage}
+                        />
+                    </>
                 ) : (
-                    <GrantsTable grants={lf} onSelect={handleSelect} lastSelectedId={lastSelectedId} />
+                    <>
+                        <GrantsTable
+                            grants={localGrants}
+                            onSelect={handleSelect}
+                            lastSelectedId={lastSelectedId}
+                        />
+                        <Pagination
+                            page={meta.current_page}
+                            totalPages={meta.last_page}
+                            totalItems={meta.total}
+                            from={meta.from}
+                            to={meta.to}
+                            setPage={setPage}
+                        />
+                    </>
                 )}
 
                 {selected && (
@@ -99,19 +156,27 @@ export default function GrantsIndex({ grants = [] }) {
                         onUpdate={handleUpdate}
                     />
                 )}
-
             </AppLayout>
+
+            {/* Loading bar keyframes */}
+            <style>{`
+                @keyframes loadbar {
+                    0%   { transform: translateX(-100%); width: 60%; }
+                    50%  { transform: translateX(66%);   width: 60%; }
+                    100% { transform: translateX(200%);  width: 60%; }
+                }
+            `}</style>
         </>
     )
 }
 
-/** Simple table view (lightweight, no pagination) */
+/** Table view */
 function GrantsTable({ grants, onSelect, lastSelectedId }) {
     return (
-        <div className="overflow-x-auto rounded-xl border border-[#b2d8d8]">
+        <div className="overflow-x-auto rounded-xl border border-[#C2E8DB]">
             <table className="w-full text-[12px] font-sans">
                 <thead>
-                    <tr className="bg-[#def2f1] text-[#5a9090] font-mono text-[10px] uppercase tracking-widest">
+                    <tr className="bg-[#C8EFE2] text-[#8A898C] font-mono text-[10px] uppercase tracking-widest">
                         <th className="px-4 py-3 text-left">Title</th>
                         <th className="px-4 py-3 text-left">Amount</th>
                         <th className="px-4 py-3 text-left">Deadline</th>
@@ -123,15 +188,15 @@ function GrantsTable({ grants, onSelect, lastSelectedId }) {
                     {grants.map(grant => (
                         <tr key={grant._id}
                             onClick={() => onSelect(grant)}
-                            className={`border-t border-[#b2d8d8] cursor-pointer hover:bg-[#f4fafa] transition-colors
-                                ${grant._id === lastSelectedId ? 'bg-[#f4fafa]' : ''}`}>
-                            <td className="px-4 py-3 max-w-[340px] truncate text-[#0d2b2b] font-medium">{grant.title}</td>
-                            <td className="px-4 py-3 font-mono text-[#3aafa9] whitespace-nowrap">{grant.amount || '—'}</td>
-                            <td className="px-4 py-3 text-[#5a9090] whitespace-nowrap">{grant.deadline || '—'}</td>
-                            <td className="px-4 py-3 text-[#5a9090]">
+                            className={`border-t border-[#C2E8DB] cursor-pointer hover:bg-[#C8EFE2]/40 transition-colors
+                                ${grant._id === lastSelectedId ? 'bg-[#C8EFE2]/40' : 'bg-white'}`}>
+                            <td className="px-4 py-3 max-w-[340px] truncate text-[#233B22] font-medium">{grant.title}</td>
+                            <td className="px-4 py-3 font-mono text-[#006825] whitespace-nowrap">{grant.amount || '—'}</td>
+                            <td className="px-4 py-3 text-[#5D5961] whitespace-nowrap">{grant.deadline || '—'}</td>
+                            <td className="px-4 py-3 text-[#5D5961]">
                                 {grant.source === 'duckduckgo' ? 'web' : grant.source || '—'}
                             </td>
-                            <td className="px-4 py-3 font-mono text-[#3aafa9]">
+                            <td className="px-4 py-3 font-mono text-[#006825]">
                                 {grant.relevance_score ? `${grant.relevance_score}%` : '—'}
                             </td>
                         </tr>
@@ -145,43 +210,21 @@ function GrantsTable({ grants, onSelect, lastSelectedId }) {
 function EmptyState({ hasFilters, onReset }) {
     return (
         <div className="flex flex-col items-center justify-center gap-4 py-24">
-            <div className="w-12 h-12 rounded-2xl bg-[#def2f1] border border-[#b2d8d8] flex items-center justify-center">
-                <Inbox size={22} className="text-[#5a9090]" />
+            <div className="w-12 h-12 rounded-2xl bg-[#C8EFE2] border border-[#C2E8DB] flex items-center justify-center">
+                <Inbox size={22} className="text-[#006825]" />
             </div>
             <div className="text-center">
-                <p className="text-[#0d2b2b] font-medium mb-1">No grants found</p>
-                <p className="font-mono text-[12px] text-[#5a9090]">
+                <p className="text-[#233B22] font-medium mb-1">No grants found</p>
+                <p className="font-mono text-[12px] text-[#8A898C]">
                     {hasFilters ? 'Try adjusting your filters.' : 'No data available.'}
                 </p>
             </div>
             {hasFilters && (
                 <button onClick={onReset}
-                    className="flex items-center gap-2 bg-[#def2f1] border border-[#8ec8c7] text-[#2b6e6b] rounded-lg px-4 py-2 text-[13px] hover:text-[#0d2b2b] transition-all">
+                    className="flex items-center gap-2 bg-[#C8EFE2] border border-[#C2E8DB] text-[#006825] rounded-lg px-4 py-2 text-[13px] hover:bg-[#C2E8DB] transition-all">
                     Clear filters
                 </button>
             )}
-        </div>
-    )
-}
-
-/**
- * Inline Config Page — rendered inside a modal overlay on the grants dashboard.
- * For a full config page experience, navigate to /config instead.
- */
-function ConfigPageInline({ onClose }) {
-    return (
-        <div className="p-6">
-            <div className="flex items-center justify-between mb-4">
-                <h2 className="font-serif font-bold text-[20px] text-[#0d2b2b]">Configuration</h2>
-                <button onClick={onClose}
-                    className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#def2f1] border border-[#b2d8d8] text-[#5a9090] hover:text-[#0d2b2b]">
-                    ✕
-                </button>
-            </div>
-            <p className="text-[13px] text-[#5a9090] mb-4">
-                For the full config interface,{' '}
-                <a href="/config" className="text-[#3aafa9] underline">open the Config page</a>.
-            </p>
         </div>
     )
 }

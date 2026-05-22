@@ -10,7 +10,7 @@ import {
 } from 'recharts'
 import { RefreshCw, Download } from 'lucide-react'
 
-// ── Palette — matches the app's teal/green theme ──────────────────────────
+// Palette - matches the app's teal/green theme
 const C = {
     teal:    '#3aafa9',
     tealDim: '#b2d8d8',
@@ -36,7 +36,7 @@ const sourceColor = (s) => SOURCE_COLORS[s] ?? '#94a3b8'
 
 const DAY_OPTIONS = [7, 14, 30, 60, 90]
 
-// ── Small helpers ─────────────────────────────────────────────────────────
+// Small helpers
 function Card({ title, hint, children, className = '' }) {
     return (
         <div className={`bg-white border border-[#b2d8d8] rounded-xl p-4 flex flex-col gap-3 ${className}`}>
@@ -72,7 +72,7 @@ function CustomTooltip({ active, payload, label }) {
     )
 }
 
-// ── Main component ────────────────────────────────────────────────────────
+// Main component
 export default function StatsIndex() {
     const [days,        setDays]        = useState(30)
     const [data,        setData]        = useState(null)
@@ -108,7 +108,7 @@ export default function StatsIndex() {
         return () => clearInterval(intervalRef.current)
     }, [autoRefresh, fetchStats])
 
-    // ── PNG export via html2canvas shim — just print the section ──────────
+    // PNG export via html2canvas shim — just print the section
     const handleExport = () => {
         if (printableRef.current) {
             printableRef.current.id = 'printable-content';  // Activate print ID
@@ -126,7 +126,7 @@ export default function StatsIndex() {
 
     return (
         <AppLayout>
-            {/* ── Toolbar ───────────────────────────────────────────────── */}
+            {/* Toolbar */}
             <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
                 <div>
                     <h1 className="font-mono text-[15px] font-semibold text-[#0d2b2b]">Pipeline Graphs</h1>
@@ -137,7 +137,7 @@ export default function StatsIndex() {
 
                 <div className="flex flex-wrap items-center gap-2">
                     {/* Day-range pills */}
-                    <div className="flex gap-1 bg-[#def2f1] border border-[#b2d8d8] rounded-lg p-0.5">
+                    <div className="flex gap-1 bg-[#def2f1] border border-[#006825]/50 rounded-lg p-0.5">
                         {DAY_OPTIONS.map(d => (
                             <button
                                 key={d}
@@ -158,7 +158,7 @@ export default function StatsIndex() {
                         className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border font-mono text-[11px] transition-colors ${
                             autoRefresh
                                 ? 'bg-[#3aaf6b] border-[#3aaf6b] text-white'
-                                : 'bg-[#def2f1] border-[#b2d8d8] text-[#5a9090] hover:text-[#0d2b2b]'
+                                : 'bg-[#def2f1] border-[#006825]/50 text-[#5a9090] hover:text-[#0d2b2b]'
                         }`}
                     >
                         <RefreshCw size={12} className={autoRefresh ? 'animate-spin' : ''} />
@@ -169,7 +169,7 @@ export default function StatsIndex() {
                     <button
                         onClick={fetchStats}
                         disabled={loading}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-[#def2f1] border-[#b2d8d8] text-[#5a9090] hover:text-[#0d2b2b] font-mono text-[11px] disabled:opacity-50 transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-[#def2f1] border-[#006825]/50 text-[#5a9090] hover:text-[#0d2b2b] font-mono text-[11px] disabled:opacity-50 transition-colors"
                     >
                         <RefreshCw size={12} className={loading ? 'animate-spin' : ''} />
                         Refresh
@@ -178,7 +178,7 @@ export default function StatsIndex() {
                     {/* Export */}
                     <button
                         onClick={handleExport}
-                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-[#def2f1] border-[#b2d8d8] text-[#5a9090] hover:text-[#0d2b2b] font-mono text-[11px] transition-colors"
+                        className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg border bg-[#def2f1] border-[#006825]/50 text-[#5a9090] hover:text-[#0d2b2b] font-mono text-[11px] transition-colors"
                     >
                         <Download size={12} />
                         Export
@@ -194,7 +194,7 @@ export default function StatsIndex() {
 
             <div ref={printableRef}>
 
-            {/* ── Summary row ───────────────────────────────────────────── */}
+            {/* Summary row */}
             <div className="flex flex-wrap gap-2 mb-6">
                 <Stat label="Scraped" value={s.total_in_window} />
                 <Stat label="Starred" value={s.starred}  color={C.amber} />
@@ -212,7 +212,7 @@ export default function StatsIndex() {
             {data && (
                 <div id="stats-export" className="grid grid-cols-1 lg:grid-cols-2 gap-4">
 
-                    {/* ── 1. Grants over time ───────────────────────────── */}
+                    {/* 1. Grants over time */}
                     <Card title="Grants over time" hint={`daily — last ${days} days`} className="lg:col-span-2">
                         <ResponsiveContainer width="100%" height={200}>
                             <AreaChart data={data.timeline} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -234,7 +234,7 @@ export default function StatsIndex() {
                         </ResponsiveContainer>
                     </Card>
 
-                    {/* ── 2. Score distribution ─────────────────────────── */}
+                    {/* 2. Score distribution */}
                     <Card title="Score distribution" hint="relevance_score buckets">
                         <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={data.scoreDist} margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
@@ -253,7 +253,7 @@ export default function StatsIndex() {
                         </ResponsiveContainer>
                     </Card>
 
-                    {/* ── 3. Pipeline funnel ────────────────────────────── */}
+                    {/* 3. Pipeline funnel */}
                     <Card title="Pipeline funnel" hint="scraped → kept → starred → applied">
                         <ResponsiveContainer width="100%" height={200}>
                             <BarChart data={data.funnel} layout="vertical"
@@ -273,7 +273,7 @@ export default function StatsIndex() {
                         </ResponsiveContainer>
                     </Card>
 
-                    {/* ── 4. Grants by source (donut) ───────────────────── */}
+                    {/* 4. Grants by source (donut) */}
                     <Card title="By source" hint="grant origin breakdown">
                         <div className="flex items-center gap-4">
                             <ResponsiveContainer width="50%" height={180}>
@@ -301,29 +301,7 @@ export default function StatsIndex() {
                             </div>
                         </div>
                     </Card>
-
-                    {/* ── 5. Run history sparkline ──────────────────────── */}
-                    <Card title="Run history" hint="last 20 scrape sessions">
-                        <ResponsiveContainer width="100%" height={180}>
-                            <BarChart data={[...data.runHistory].reverse()}
-                                      margin={{ top: 4, right: 8, left: -20, bottom: 0 }}>
-                                <CartesianGrid strokeDasharray="3 3" stroke={C.border} vertical={false} />
-                                <XAxis dataKey="run_at"
-                                       tick={{ fontSize: 9, fill: C.muted, fontFamily: 'monospace' }}
-                                       tickFormatter={d => d?.slice(5, 10)} />
-                                <YAxis tick={{ fontSize: 10, fill: C.muted, fontFamily: 'monospace' }} allowDecimals={false} />
-                                <Tooltip content={<CustomTooltip />} />
-                                <Bar dataKey="total_api_hits"  name="API hits"    fill={C.tealDim} radius={[2,2,0,0]} stackId="a" />
-                                <Bar dataKey="newly_processed" name="New grants"  fill={C.teal}    radius={[2,2,0,0]} stackId="b" />
-                                <Bar dataKey="cash_grants_found" name="Cash found" fill={C.green}  radius={[2,2,0,0]} stackId="b" />
-                                <Legend
-                                    iconType="square" iconSize={8}
-                                    wrapperStyle={{ fontSize: '10px', fontFamily: 'monospace', color: C.muted }}
-                                />
-                            </BarChart>
-                        </ResponsiveContainer>
-                    </Card>
-
+                    
                 </div>
             )}
             </div>

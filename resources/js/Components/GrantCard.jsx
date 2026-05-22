@@ -1,22 +1,22 @@
 import { useState } from 'react'
-import { DollarSign, Calendar, Users, ArrowRight, Sparkles, CheckCheck, EyeOff, Star } from 'lucide-react'
+import { Calendar, Users, ArrowRight, CheckCheck, EyeOff, Star } from 'lucide-react'
 import { formatAmount, formatDeadline, urgencyClass, stripHtml } from '../utils/formatters'
 import { patchGrant } from '../utils/api'
 
 const URGENCY = {
-    urgent:  { bar: 'bg-[#d93050]', text: 'text-[#d93050]', chip: 'bg-[#d93050]/10 border-[#d93050]/25 text-[#d93050]', label: 'Urgent' },
-    soon:    { bar: 'bg-[#e06030]', text: 'text-[#e06030]', chip: 'bg-[#e06030]/10 border-[#e06030]/25 text-[#e06030]', label: 'Soon'   },
-    ok:      { bar: 'bg-[#3aafa9]', text: 'text-[#5a9090]', chip: 'bg-[#3aafa9]/10 border-[#3aafa9]/15 text-[#5a9090]', label: null     },
-    expired: { bar: 'bg-[#b2d8d8]', text: 'text-[#5a9090]', chip: 'bg-[#def2f1] border-[#b2d8d8] text-[#5a9090]',       label: 'Expired'},
-    neutral: { bar: 'bg-[#b2d8d8]', text: 'text-[#5a9090]', chip: 'bg-[#def2f1] border-[#b2d8d8] text-[#5a9090]',       label: null     },
+    urgent:  { bar: 'bg-[#F5601D]', text: 'text-[#F5601D]', chip: 'bg-[#F5601D]/10 border-[#F5601D]/25 text-[#F5601D]', label: 'Urgent' },
+    soon:    { bar: 'bg-[#FF7900]', text: 'text-[#FF7900]', chip: 'bg-[#FF7900]/10 border-[#FF7900]/25 text-[#FF7900]', label: 'Soon'   },
+    ok:      { bar: 'bg-[#006825]', text: 'text-[#006825]', chip: 'bg-[#006825]/10 border-[#006825]/15 text-[#006825]', label: null     },
+    expired: { bar: 'bg-[#C2E8DB]', text: 'text-[#8A898C]', chip: 'bg-[#C8EFE2] border-[#C2E8DB] text-[#8A898C]', label: 'Expired'},
+    neutral: { bar: 'bg-[#C2E8DB]', text: 'text-[#8A898C]', chip: 'bg-[#C8EFE2] border-[#C2E8DB] text-[#8A898C]', label: null     },
 }
 
 function RelevanceBadge({ score }) {
     if (!score) return null
     const pct    = Math.min(Math.max(score, 0), 100)
-    const color  = pct >= 70 ? '#3aafa9' : pct >= 40 ? '#d4a017' : '#8ec8c7'
-    const bg     = pct >= 70 ? 'rgba(58,175,169,0.10)' : pct >= 40 ? 'rgba(212,160,23,0.10)' : 'rgba(178,216,216,0.25)'
-    const border = pct >= 70 ? 'rgba(58,175,169,0.30)' : pct >= 40 ? 'rgba(212,160,23,0.30)' : '#b2d8d8'
+    const color  = pct >= 70 ? '#006825' : pct >= 40 ? '#d4a017' : '#006825'
+    const bg     = pct >= 70 ? 'rgba(0,104,37,0.10)' : pct >= 40 ? 'rgba(212,160,23,0.10)' : 'rgba(194,232,219,0.40)'
+    const border = pct >= 70 ? 'rgba(0,104,37,0.30)' : pct >= 40 ? 'rgba(212,160,23,0.30)' : '#C2E8DB'
     return (
         <span
             title={`Relevance score: ${pct}/100`}
@@ -33,8 +33,6 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
     const amount    = formatAmount(grant.amount)
     const deadline  = formatDeadline(grant.deadline)
     const u         = URGENCY[urgencyClass(deadline?.diff)]
-    const isCash    = grant.offers_cash ?? grant.is_cash_grant ?? true
-    const isAI      = !!grant.ai_analyzed
     const isApplied = !!grant.applied
     const isIgnored = !!grant.ignore
     const plainDesc = stripHtml(grant.description)
@@ -67,11 +65,11 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
             role="button"
             aria-label={`View ${grant.title}`}
             className={`relative group bg-white rounded-2xl p-5 flex flex-col gap-3 cursor-pointer overflow-hidden
-                transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(58,175,169,0.12)]
-                focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(58,175,169,0.2)]
+                transition-all duration-200 hover:-translate-y-1 hover:shadow-[0_12px_40px_rgba(0,104,37,0.12)]
+                focus-visible:outline-none focus-visible:shadow-[0_0_0_3px_rgba(0,104,37,0.2)]
                 ${isLastSelected
-                    ? 'border-2 border-[#3aafa9] bg-[#f4fafa] shadow-[0_4px_20px_rgba(58,175,169,0.15)]'
-                    : 'border border-[#b2d8d8] hover:border-[#8ec8c7]'
+                    ? 'border-2 border-[#006825] bg-white/60 shadow-[0_4px_20px_rgba(0,104,37,0.15)]'
+                    : 'border border-[#C2E8DB] hover:border-[#006825]/30'
                 }`}
             style={{
                 animation: `cardIn 0.4s ease both`,
@@ -88,7 +86,7 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
                 className={`absolute top-3 right-3 w-7 h-7 flex items-center justify-center rounded-lg border transition-all z-10
                     ${starred
                         ? 'bg-[#fffbe6] border-[#d4a017] text-[#d4a017]'
-                        : 'bg-transparent border-transparent text-[#b2d8d8] opacity-0 group-hover:opacity-100 hover:border-[#d4a017] hover:text-[#d4a017]'
+                        : 'bg-transparent border-transparent text-[#C2E8DB] opacity-0 group-hover:opacity-100 hover:border-[#d4a017] hover:text-[#d4a017]'
                     }`}
             >
                 <Star size={13} strokeWidth={starred ? 0 : 1.5} fill={starred ? 'currentColor' : 'none'} />
@@ -96,18 +94,8 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
 
             {/* Tags */}
             <div className="flex flex-wrap gap-1.5 mt-1 pr-8">
-                {isCash && (
-                    <span className="inline-flex items-center gap-1 font-mono text-[9px] font-medium uppercase tracking-wide px-2 py-0.5 rounded bg-[#d4a017]/12 border border-[#d4a017]/30 text-[#d4a017]">
-                        <DollarSign size={9} strokeWidth={2.5} /> Cash
-                    </span>
-                )}
-                {isAI && (
-                    <span className="inline-flex items-center gap-1 font-mono text-[9px] font-medium uppercase tracking-wide px-2 py-0.5 rounded bg-[#3aafa9]/10 border border-[#3aafa9]/25 text-[#3aafa9]">
-                        <Sparkles size={9} strokeWidth={2.5} /> AI
-                    </span>
-                )}
                 {grant.source && (
-                    <span className="font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded bg-[#def2f1] border border-[#b2d8d8] text-[#5a9090]">
+                    <span className="font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded bg-[#C8EFE2] border border-[#C2E8DB] text-[#5D5961]">
                         {grant.source === 'duckduckgo' ? 'web search' : grant.source}
                     </span>
                 )}
@@ -117,7 +105,7 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
                     </span>
                 )}
                 {isApplied && (
-                    <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded border bg-[#c2edce]/60 border-[#3aaf6b]/30 text-[#3aaf6b]">
+                    <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded border bg-[#006825]/10 border-[#006825]/30 text-[#006825]">
                         <CheckCheck size={9} /> Applied
                     </span>
                 )}
@@ -130,34 +118,34 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
             </div>
 
             {/* Title */}
-            <h2 className="font-serif font-semibold text-[15px] text-[#0d2b2b] leading-snug tracking-tight">
+            <h2 className="font-serif font-semibold text-[15px] text-[#233B22] leading-snug tracking-tight">
                 {grant.title}
             </h2>
 
             {/* Description */}
             {plainDesc && (
-                <p className="text-[12.5px] text-[#2b6e6b] leading-relaxed line-clamp-2">{plainDesc}</p>
+                <p className="text-[12.5px] text-[#5D5961] leading-relaxed line-clamp-2">{plainDesc}</p>
             )}
 
             {/* Eligibility */}
             {grant.eligibility && (
-                <div className="flex items-start gap-1.5 text-[12px] text-[#5a9090]">
+                <div className="flex items-start gap-1.5 text-[12px] text-[#8A898C]">
                     <Users size={11} className="mt-0.5 shrink-0" />
                     <span className="leading-snug">{grant.eligibility}</span>
                 </div>
             )}
 
             {/* Footer */}
-            <div className="flex items-end justify-between mt-auto pt-3 border-t border-[#b2d8d8]">
+            <div className="flex items-end justify-between mt-auto pt-3 border-t border-[#C2E8DB]">
                 <div className="flex flex-col gap-1">
                     <div className="flex items-baseline gap-1">
                         {amount ? (
                             <>
-                                <span className="font-mono text-[20px] font-medium text-[#3aafa9] leading-none">{amount}</span>
-                                <span className="font-mono text-[11px] text-[#5a9090]">max</span>
+                                <span className="font-mono text-[20px] font-medium text-[#006825] leading-none">{amount}</span>
+                                <span className="font-mono text-[11px] text-[#8A898C]">max</span>
                             </>
                         ) : (
-                            <span className="font-mono text-[14px] font-medium text-[#8ec8c7] leading-none">Unknown amount</span>
+                            <span className="font-mono text-[14px] font-medium text-[#C2E8DB] leading-none">Unknown amount</span>
                         )}
                     </div>
                     {deadline && (
@@ -172,7 +160,7 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
                         </div>
                     )}
                 </div>
-                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#def2f1] border border-[#b2d8d8] text-[#5a9090] transition-all group-hover:bg-[#3aafa9] group-hover:border-[#3aafa9] group-hover:text-white">
+                <div className="w-8 h-8 flex items-center justify-center rounded-lg bg-[#C8EFE2] border border-[#C2E8DB] text-[#006825] transition-all group-hover:bg-[#006825] group-hover:border-[#006825] group-hover:text-white">
                     <ArrowRight size={14} />
                 </div>
             </div>

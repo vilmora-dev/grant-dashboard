@@ -15,6 +15,8 @@ return new class extends Migration
             $table->text('description')->nullable();
             $table->boolean('is_active')->default(true);
             $table->boolean('is_deleted')->default(false);
+            $table->unsignedInteger('ddg_combo_offset')->default(0)
+                  ->comment('Tracks DDG combo rotation position for this initiative');
             $table->timestamps();
         });
     }

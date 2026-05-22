@@ -16,9 +16,19 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->web(append: [
             \App\Http\Middleware\HandleInertiaRequests::class,
             \Illuminate\Http\Middleware\AddLinkHeadersForPreloadedAssets::class,
+            \App\Http\Middleware\ForcePasswordChange::class,
         ]);
 
-        //
+        // API routes need session middleware so auth:web works with Inertia's cookie session
+        $middleware->api(prepend: [
+            \Illuminate\Cookie\Middleware\EncryptCookies::class,
+            \Illuminate\Cookie\Middleware\AddQueuedCookiesToResponse::class,
+            \Illuminate\Session\Middleware\StartSession::class,
+        ]);
+
+        $middleware->alias([
+            'full.access' => \App\Http\Middleware\RequireFullAccess::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

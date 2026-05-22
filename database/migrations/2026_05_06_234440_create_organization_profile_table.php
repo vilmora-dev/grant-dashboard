@@ -23,7 +23,6 @@ return new class extends Migration
             $table->string('budget_range', 50)->nullable();
             $table->smallInteger('staff_count')->nullable();
             $table->smallInteger('volunteer_count')->nullable();
-            $table->text('notes')->nullable();
             $table->json('ddg_searching')->nullable();
             $table->json('ddg_sites')->nullable();
             // Only updated_at exists in the original schema (no created_at)

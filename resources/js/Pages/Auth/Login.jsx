@@ -23,13 +23,13 @@ export default function Login({ status, canResetPassword }) {
 
                 {/* Card header */}
                 <div className="mb-7">
-                    <h1 className="font-serif font-bold text-[22px] text-[#0d2b2b]">Welcome back</h1>
-                    <p className="font-mono text-[12px] text-[#5a9090] mt-1">Sign in to your grants dashboard.</p>
+                    <h1 className="font-serif font-bold text-[22px] text-[#233B22]">Welcome back</h1>
+                    <p className="font-mono text-[12px] text-[#5D5961] mt-1">Sign in to your grants dashboard.</p>
                 </div>
 
                 {status && (
-                    <div className="mb-5 rounded-lg border border-[#3aaf6b]/30 bg-[#3aaf6b]/8 px-4 py-3">
-                        <p className="font-mono text-[12px] text-[#3aaf6b]">{status}</p>
+                    <div className="mb-5 rounded-lg border border-[#006825]/30 bg-[#006825]/8 px-4 py-3">
+                        <p className="font-mono text-[12px] text-[#006825]">{status}</p>
                     </div>
                 )}
 
@@ -68,28 +68,28 @@ export default function Login({ status, canResetPassword }) {
                             name="remember"
                             checked={data.remember}
                             onChange={e => setData('remember', e.target.checked)}
-                            className="w-4 h-4 rounded border-[#b2d8d8] text-[#3aafa9] bg-[#def2f1]
-                                       focus:ring-[#3aafa9] focus:ring-offset-0 transition-colors"
+                            className="w-4 h-4 rounded border-[#C2E8DB] text-[#006825] bg-[#C8EFE2]
+                                       focus:ring-[#006825] focus:ring-offset-0 transition-colors"
                         />
-                        <span className="font-sans text-[13px] text-[#5a9090]">Remember me</span>
+                        <span className="font-sans text-[13px] text-[#5D5961]">Remember me</span>
                     </label>
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-1">
-                        {canResetPassword && (
+                        {/* {canResetPassword && (
                             <Link
                                 href={route('password.request')}
-                                className="font-mono text-[12px] text-[#5a9090] hover:text-[#0d2b2b] underline transition-colors"
+                                className="font-mono text-[12px] text-[#5D5961] hover:text-[#233B22] underline transition-colors"
                             >
                                 Forgot password?
                             </Link>
-                        )}
+                        )} */}
                         <button
                             type="submit"
                             disabled={processing}
-                            className="ml-auto bg-[#3aafa9] hover:bg-[#2b9e99] disabled:opacity-60 text-white font-sans text-[13px]
+                            className="ml-auto bg-[#006825] hover:bg-[#005a1f] disabled:opacity-60 text-white font-sans text-[13px]
                                        rounded-lg px-6 py-2.5 transition-colors outline-none
-                                       focus:shadow-[0_0_0_3px_rgba(58,175,169,0.25)] flex items-center gap-2"
+                                       focus:shadow-[0_0_0_3px_rgba(0,104,37,0.25)] flex items-center gap-2"
                         >
                             {processing && (
                                 <svg className="animate-spin w-3.5 h-3.5" viewBox="0 0 24 24" fill="none">
@@ -102,16 +102,6 @@ export default function Login({ status, canResetPassword }) {
                     </div>
                 </form>
 
-                {/* Register link */}
-                <div className="mt-6 pt-5 border-t border-[#e8f4f4] text-center">
-                    <p className="font-mono text-[12px] text-[#5a9090]">
-                        Don't have an account?{' '}
-                        <Link href={route('register')} className="text-[#3aafa9] hover:text-[#2b6e6b] transition-colors">
-                            Register
-                        </Link>
-                    </p>
-                </div>
-
             </div>
         </GuestLayout>
     )
@@ -120,18 +110,18 @@ export default function Login({ status, canResetPassword }) {
 function Field({ label, error, children }) {
     return (
         <div>
-            <label className="block font-mono text-[11px] uppercase tracking-widest text-[#5a9090] mb-1.5">
+            <label className="block font-mono text-[11px] uppercase tracking-widest text-[#5D5961] mb-1.5">
                 {label}
             </label>
             {children}
-            {error && <p className="mt-1.5 font-mono text-[11px] text-[#d93050]">{error}</p>}
+            {error && <p className="mt-1.5 font-mono text-[11px] text-[#F5601D]">{error}</p>}
         </div>
     )
 }
 
 function inputCls(hasError) {
-    return `w-full bg-[#def2f1] border rounded-lg px-3 py-2.5 text-[13px] text-[#0d2b2b] font-sans
-            placeholder-[#5a9090] outline-none transition-shadow
-            focus:border-[#3aafa9] focus:shadow-[0_0_0_3px_rgba(58,175,169,0.12)]
-            ${hasError ? 'border-[#d93050]' : 'border-[#b2d8d8]'}`
+    return `w-full bg-white border rounded-lg px-3 py-2.5 text-[13px] text-[#233B22] font-sans
+            placeholder-[#8A898C] outline-none transition-shadow
+            focus:border-[#006825] focus:shadow-[0_0_0_3px_rgba(0,104,37,0.12)]
+            ${hasError ? 'border-[#F5601D]' : 'border-[#C2E8DB]'}`
 }

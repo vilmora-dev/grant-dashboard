@@ -3,6 +3,7 @@
 namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GrantUnified extends Model
 {
@@ -37,4 +38,10 @@ class GrantUnified extends Model
         'relevance_score' => 'integer',
         'scraped_at'      => 'datetime',
     ];
+
+    public function actionLogs(): HasMany
+    {
+        return $this->hasMany(GrantActionLog::class, 'grant_id')
+                    ->orderByDesc('created_at');
+    }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\GrantActionLog;
 use App\Models\GrantUnified;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -26,6 +27,10 @@ class GrantDataController extends Controller
 
     /**
      * PATCH /api/grants/{id}
+     *
+     * Validates the incoming fields, captures the before-values for the fields
+     * that are actually changing, writes the update, then records one audit log
+     * entry with truncated before/after snapshots for long text fields.
      */
     public function updateGrant(Request $request, int $id): JsonResponse
     {
@@ -49,9 +54,62 @@ class GrantDataController extends Controller
             return response()->json(['error' => 'No fields to update'], 400);
         }
 
+        // Snapshot only the fields that are about to change, before the update
+        $oldValues = collect($data)
+            ->mapWithKeys(fn ($_, string $key) => [$key => $grant->getAttribute($key)])
+            ->all();
+
         $grant->update($data);
 
+        // Write one immutable audit record per PATCH call.
+        // Long text fields (notes, description, etc.) are truncated to 500 chars
+        // — the full content already lives on the grants row.
+        GrantActionLog::create([
+            'grant_id'   => $grant->id,
+            'user_id'    => $request->user()?->id,   // null-safe: covers system writes
+            'action'     => GrantActionLog::resolveAction($data),
+            'old_value'  => GrantActionLog::truncateForLog($oldValues),
+            'new_value'  => GrantActionLog::truncateForLog($data),
+            'ip_address' => $request->ip(),
+            'user_agent' => substr($request->userAgent() ?? '', 0, 300),
+            'created_at' => now(),
+        ]);
+
         return response()->json($grant->fresh());
+    }
+
+    /**
+     * GET /api/grants/{id}/logs
+     *
+     * Returns the action log for a single grant.
+     * Full-access users see all entries (including other users' actions).
+     * Standard users see only their own entries.
+     */
+    public function logs(Request $request, int $id): JsonResponse
+    {
+        $grant    = GrantUnified::findOrFail($id);
+        $user     = $request->user();
+        $isAdmin  = $user->role === 'full';
+
+        $query = $grant->actionLogs()                   // already ordered by created_at DESC
+            ->with('user:id,name')                      // eager-load just name, no password
+            ->limit(100);                               // cap at 100 — more than enough per grant
+
+        if (! $isAdmin) {
+            $query->where('user_id', $user->id);
+        }
+
+        $logs = $query->get()->map(fn ($log) => [
+            'id'         => $log->id,
+            'action'     => $log->action,
+            'old_value'  => $log->old_value,
+            'new_value'  => $log->new_value,
+            'user_name'  => $log->user?->name ?? 'System',
+            'is_me'      => $log->user_id === $user->id,
+            'created_at' => $log->created_at->toISOString(),
+        ]);
+
+        return response()->json(['logs' => $logs]);
     }
 
     /**
@@ -69,11 +127,6 @@ class GrantDataController extends Controller
     {
         $allowed = ['grants', 'keywords', 'initiatives', 'organization_profile'];
         $table   = $request->query('table', 'grants');
-
-        // Redirect legacy table names to unified
-        if (in_array($table, ['grants_gov'])) {
-            'grants';
-        }
 
         if (!in_array($table, $allowed)) {
             return response()->json(['error' => 'Table not allowed'], 403);

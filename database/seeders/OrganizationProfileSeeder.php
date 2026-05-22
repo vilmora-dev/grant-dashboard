@@ -35,10 +35,10 @@ class OrganizationProfileSeeder extends Seeder
                 'calepa.ca.gov',
                 'dot.ca.gov',
                 'calfund.org',
-                'annenbergfoundation.org',
+                'annenberg.org',
                 'rosehillsfoundation.org',
                 'wildlife.ca.gov',
-                'cnra.ca.gov',
+                'resources.ca.gov',
                 'climatejusticealliance.org',
             ],
         ]);

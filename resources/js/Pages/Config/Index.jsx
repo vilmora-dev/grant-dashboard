@@ -1,6 +1,6 @@
 import { useState, useCallback } from 'react'
 import { Head, router } from '@inertiajs/react'
-import { Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, X, AlertCircle } from 'lucide-react'
+import { Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, X, AlertCircle, Save } from 'lucide-react'
 import AppLayout from '../../Layouts/AppLayout'
 
 /**
@@ -34,10 +34,10 @@ function Btn({ onClick, danger, small, children, disabled, type = 'button' }) {
             disabled={disabled}
             className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[12px] font-sans transition-all disabled:opacity-40 ${
                 danger
-                    ? 'border-[#d93050]/30 text-[#d93050] hover:bg-[#d93050]/10'
+                    ? 'border-[#F5601D]/50 text-[#F5601D] hover:bg-[#F5601D]/10'
                     : small
-                    ? 'border-[#b2d8d8] text-[#2b6e6b] hover:text-[#0d2b2b] hover:border-[#8ec8c7]'
-                    : 'border-[#3aafa9]/30 text-[#3aafa9] hover:bg-[#3aafa9]/10'
+                    ? 'bg-[#C8EFE2] border-[#C2E8DB] text-[#233B22] hover:text-[#006825] hover:border-[#006825]/40'
+                    : 'bg-[#006825] border-[#006825] text-white hover:bg-[#005a1f]'
             }`}
         >
             {children}
@@ -52,7 +52,7 @@ function Input({ value, onChange, placeholder, type = 'text', className = '' }) 
             value={value ?? ''}
             onChange={e => onChange(e.target.value)}
             placeholder={placeholder}
-            className={`bg-[#def2f1] border border-[#b2d8d8] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#0d2b2b] placeholder-[#5a9090] outline-none focus:border-[#3aafa9] focus:shadow-[0_0_0_2px_rgba(58,175,169,0.12)] transition-all ${className}`}
+            className={`bg-white border border-[#C2E8DB] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#233B22] placeholder-[#8A898C] outline-none focus:border-[#006825] focus:shadow-[0_0_0_2px_rgba(0,104,37,0.12)] transition-all ${className}`}
         />
     )
 }
@@ -62,7 +62,7 @@ function Select({ value, onChange, children, className = '' }) {
         <select
             value={value ?? ''}
             onChange={e => onChange(e.target.value)}
-            className={`bg-[#def2f1] border border-[#b2d8d8] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#0d2b2b] outline-none focus:border-[#3aafa9] transition-colors appearance-none cursor-pointer ${className}`}
+            className={`bg-white border border-[#C2E8DB] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#233B22] outline-none focus:border-[#006825] transition-colors appearance-none cursor-pointer ${className}`}
         >
             {children}
         </select>
@@ -97,15 +97,15 @@ function ArrayEditor({ items, onChange, placeholder }) {
         <div>
             <div className="flex flex-wrap gap-1.5 mb-2 min-h-[28px]">
                 {items.map((item, i) => (
-                    <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#3aafa9]/10 border border-[#3aafa9]/20 text-[11px] font-mono text-[#2b6e6b]">
+                    <span key={i} className="flex items-center gap-1 px-2 py-0.5 rounded-full bg-[#C8EFE2] border border-[#C2E8DB] text-[11px] font-mono text-[#5D5961]">
                         {item}
-                        <button onClick={() => remove(i)} className="text-[#5a9090] hover:text-[#d93050] transition-colors ml-0.5">
+                        <button onClick={() => remove(i)} className="text-[#8A898C] hover:text-[#d93050] transition-colors ml-0.5">
                             <X size={10} />
                         </button>
                     </span>
                 ))}
                 {items.length === 0 && (
-                    <span className="text-[10px] font-mono text-[#8ec8c7] italic">none — using defaults</span>
+                    <span className="text-[10px] font-mono text-[#8A898C] italic">none — using defaults</span>
                 )}
             </div>
             <div className="flex gap-2">
@@ -125,26 +125,26 @@ function DeleteConfirmModal({ initiative, onConfirm, onCancel }) {
     const match = typed.trim() === initiative.slug
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#0d2b2b]/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-[#1B3829]/50 backdrop-blur-sm">
             <div className="w-full max-w-md mx-4 bg-white border border-[#d93050]/30 rounded-2xl shadow-[0_24px_64px_rgba(217,48,80,0.15)] p-6">
                 <div className="flex items-start gap-3 mb-4">
                     <div className="w-8 h-8 rounded-full bg-[#d93050]/10 flex items-center justify-center shrink-0 mt-0.5">
                         <AlertCircle size={16} className="text-[#d93050]" />
                     </div>
                     <div>
-                        <h3 className="font-serif font-bold text-[14px] text-[#0d2b2b] mb-1">
+                        <h3 className="font-serif font-bold text-[14px] text-[#233B22] mb-1">
                             Delete "{initiative.display_name}"?
                         </h3>
-                        <p className="text-[12px] text-[#5a9090] font-sans leading-relaxed">
+                        <p className="text-[12px] text-[#8A898C] font-sans leading-relaxed">
                             This will permanently delete the initiative and{' '}
                             <strong className="text-[#d93050]">all keywords assigned exclusively to it</strong>.
                             Keywords shared across multiple initiatives will only lose this initiative link.
                         </p>
                     </div>
                 </div>
-                <div className="mb-4 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-lg">
-                    <p className="text-[11px] font-mono text-[#5a9090] mb-1.5">
-                        Type the slug to confirm: <strong className="text-[#0d2b2b]">{initiative.slug}</strong>
+                <div className="mb-4 p-3 bg-[#C8EFE2] border border-[#C2E8DB] rounded-lg">
+                    <p className="text-[11px] font-mono text-[#8A898C] mb-1.5">
+                        Type the slug to confirm: <strong className="text-[#233B22]">{initiative.slug}</strong>
                     </p>
                     <Input value={typed} onChange={setTyped} placeholder={initiative.slug} className="w-full font-mono" />
                 </div>
@@ -174,32 +174,32 @@ function InitiativeCard({ initiative, keywords, onToggleActive, onDelete }) {
 
     return (
         <div className={`border rounded-xl p-4 transition-all ${
-            initiative.is_active ? 'border-[#b2d8d8] bg-white' : 'border-[#e0eaea] bg-[#f4fafa] opacity-60'
+            initiative.is_active ? 'border-[#C2E8DB] bg-white' : 'border-[#C2E8DB] bg-[#C8EFE2]/40 opacity-60'
         }`}>
             <div className="flex items-start justify-between gap-2 mb-1">
                 <div className="min-w-0">
-                    <h3 className="font-serif font-bold text-[14px] text-[#0d2b2b] leading-tight">{initiative.display_name}</h3>
-                    <span className="font-mono text-[10px] text-[#5a9090]">{initiative.slug}</span>
+                    <h3 className="font-serif font-bold text-[14px] text-[#233B22] leading-tight">{initiative.display_name}</h3>
+                    <span className="font-mono text-[10px] text-[#8A898C]">{initiative.slug}</span>
                 </div>
                 <div className="flex items-center gap-1 shrink-0">
-                    <button onClick={() => onToggleActive(initiative)} className="text-[#2b6e6b] hover:text-[#3aafa9] transition-colors" title={initiative.is_active ? 'Deactivate' : 'Activate'}>
-                        {initiative.is_active ? <ToggleRight size={20} className="text-[#3aafa9]" /> : <ToggleLeft size={20} />}
+                    <button onClick={() => onToggleActive(initiative)} className="text-[#5D5961] hover:text-[#006825] transition-colors" title={initiative.is_active ? 'Deactivate' : 'Activate'}>
+                        {initiative.is_active ? <ToggleRight size={20} className="text-[#006825]" /> : <ToggleLeft size={20} />}
                     </button>
-                    <button onClick={() => onDelete(initiative)} className="text-[#5a9090] hover:text-[#d93050] transition-colors p-1" title="Delete initiative">
+                    <button onClick={() => onDelete(initiative)} className="text-[#8A898C] hover:text-[#d93050] transition-colors p-1" title="Delete initiative">
                         <Trash2 size={14} />
                     </button>
                 </div>
             </div>
             {initiative.description && (
-                <p className="text-[11px] text-[#2b6e6b] font-sans leading-relaxed mb-3 line-clamp-2">{initiative.description}</p>
+                <p className="text-[11px] text-[#5D5961] font-sans leading-relaxed mb-3 line-clamp-2">{initiative.description}</p>
             )}
             <div className="flex flex-wrap items-center gap-1.5 mt-2">
                 {preview.map(k => (
-                    <span key={k.id} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#3aafa9]/8 border border-[#3aafa9]/20 text-[#2b6e6b]">{k.keyword}</span>
+                    <span key={k.id} className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#C8EFE2] border border-[#C2E8DB] text-[#5D5961]">{k.keyword}</span>
                 ))}
-                {extra > 0 && <span className="text-[10px] font-mono text-[#5a9090]">+{extra} more</span>}
-                {kwList.length === 0 && <span className="text-[10px] font-mono text-[#8ec8c7] italic">no active keywords</span>}
-                <span className="ml-auto text-[10px] font-mono text-[#5a9090]">{kwList.length} keyword{kwList.length !== 1 ? 's' : ''}</span>
+                {extra > 0 && <span className="text-[10px] font-mono text-[#8A898C]">+{extra} more</span>}
+                {kwList.length === 0 && <span className="text-[10px] font-mono text-[#8A898C] italic">no active keywords</span>}
+                <span className="ml-auto text-[10px] font-mono text-[#8A898C]">{kwList.length} keyword{kwList.length !== 1 ? 's' : ''}</span>
             </div>
         </div>
     )
@@ -374,12 +374,12 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
 
             {/* Initiative cards */}
             <div className="flex items-center justify-between mb-3">
-                <p className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090]">Initiatives — {localInitiatives.length}</p>
+                <p className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C]">Initiatives — {localInitiatives.length}</p>
                 <Btn small onClick={() => setShowIniForm(v => !v)}><Plus size={12} /> New initiative</Btn>
             </div>
 
             {showIniForm && (
-                <div className="mb-4 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-xl">
+                <div className="mb-4 p-3 bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl">
                     <ErrorBanner message={iniErr} />
                     <div className="flex flex-wrap gap-2">
                         <Input value={iniForm.slug} onChange={v => setIniForm(f => ({ ...f, slug: v }))} placeholder="slug (e.g. ai-climate-tools)" className="w-44 font-mono" />
@@ -405,21 +405,21 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                     />
                 ))}
                 {localInitiatives.length === 0 && (
-                    <div className="col-span-2 text-center py-8 text-[12px] text-[#5a9090] font-sans">No initiatives yet — add one above.</div>
+                    <div className="col-span-2 text-center py-8 text-[12px] text-[#8A898C] font-sans">No initiatives yet — add one above.</div>
                 )}
             </div>
 
             {/* Divider */}
             <div className="flex items-center gap-3 my-5">
-                <div className="flex-1 border-t border-[#b2d8d8]" />
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090]">Keywords</span>
-                <div className="flex-1 border-t border-[#b2d8d8]" />
+                <div className="flex-1 border-t border-[#C2E8DB]" />
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C]">Keywords</span>
+                <div className="flex-1 border-t border-[#C2E8DB]" />
             </div>
 
             <ErrorBanner message={kwErr} />
 
             {/* Add keyword form */}
-            <div className="flex flex-wrap gap-2 mb-4 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-xl">
+            <div className="flex flex-wrap gap-2 mb-4 p-3 bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl">
                 <Input value={kwForm.keyword} onChange={v => setKwForm(f => ({ ...f, keyword: v }))} placeholder="keyword" className="flex-1 min-w-[140px]" />
                 <Select value={kwForm.initiative_id} onChange={v => setKwForm(f => ({ ...f, initiative_id: v }))} className="flex-1 min-w-[160px]">
                     <option value="">Select initiative…</option>
@@ -433,10 +433,10 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
 
             {/* Filter bar */}
             <div className="flex items-center gap-2 mb-3 flex-wrap">
-                <span className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090]">Filter:</span>
+                <span className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C]">Filter:</span>
                 <button
                     onClick={() => setKwFilter('')}
-                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors ${kwFilter === '' ? 'bg-[#3aafa9]/10 border-[#3aafa9]/30 text-[#3aafa9]' : 'border-[#b2d8d8] text-[#5a9090] hover:text-[#2b6e6b]'}`}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors ${kwFilter === '' ? 'bg-[#006825]/10 border-[#006825]/20 text-[#006825]' : 'border-[#C2E8DB] text-[#8A898C] hover:text-[#5D5961]'}`}
                 >
                     All ({localKeywords.length})
                 </button>
@@ -444,7 +444,7 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                     <button
                         key={ini.id}
                         onClick={() => setKwFilter(String(ini.id))}
-                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors ${kwFilter === String(ini.id) ? 'bg-[#3aafa9]/10 border-[#3aafa9]/30 text-[#3aafa9]' : 'border-[#b2d8d8] text-[#5a9090] hover:text-[#2b6e6b]'}`}
+                        className={`px-2.5 py-1 rounded-lg text-[11px] font-mono border transition-colors ${kwFilter === String(ini.id) ? 'bg-[#006825]/10 border-[#006825]/20 text-[#006825]' : 'border-[#C2E8DB] text-[#8A898C] hover:text-[#5D5961]'}`}
                     >
                         {ini.slug} ({localKeywords.filter(k => k.initiative_id === ini.id).length})
                     </button>
@@ -452,10 +452,10 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
             </div>
 
             {/* Keyword table */}
-            <div className="overflow-x-auto rounded-xl border border-[#b2d8d8]">
+            <div className="overflow-x-auto rounded-xl border border-[#C2E8DB]">
                 <table className="w-full text-[12px] font-sans">
                     <thead>
-                        <tr className="bg-[#def2f1] text-[#5a9090] font-mono text-[10px] uppercase tracking-widest">
+                        <tr className="bg-[#C8EFE2] text-[#8A898C] font-mono text-[10px] uppercase tracking-widest">
                             <th className="px-4 py-3 text-left">Keyword</th>
                             <th className="px-4 py-3 text-left">Initiative(s)</th>
                             <th className="px-4 py-3 text-left w-10">Pri</th>
@@ -473,10 +473,10 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                             const first = rows[0]
 
                             return (
-                                <tr key={keyword} className="border-t border-[#b2d8d8] hover:bg-[#def2f1]/50 transition-colors">
+                                <tr key={keyword} className="border-t border-[#C2E8DB] hover:bg-[#C8EFE2]/50 transition-colors">
 
                                     {/* Keyword */}
-                                    <td className="px-4 py-2.5 text-[#0d2b2b] font-mono text-[11px] align-top">
+                                    <td className="px-4 py-2.5 text-[#233B22] font-mono text-[11px] align-top">
                                         {keyword}
                                     </td>
 
@@ -487,18 +487,18 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                                 const ini = iniById[kw.initiative_id]
                                                 return ini ? (
                                                     <span key={kw.id}
-                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#3aafa9]/8 border border-[#3aafa9]/20 text-[#2b6e6b]"
-                                                        style={{ backgroundColor: 'rgba(58,175,169,0.08)' }}>
+                                                        className="inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono bg-[#C8EFE2] border border-[#C2E8DB] text-[#5D5961]"
+                                                        style={{}}>
                                                         {ini.slug}
                                                         <button
                                                             onClick={() => handleDeleteKw(kw.id)}
                                                             title={`Remove from ${ini.slug}`}
-                                                            className="text-[#5a9090] hover:text-[#d93050] transition-colors ml-0.5 leading-none">
+                                                            className="text-[#8A898C] hover:text-[#d93050] transition-colors ml-0.5 leading-none">
                                                             <X size={9} strokeWidth={2.5} />
                                                         </button>
                                                     </span>
                                                 ) : (
-                                                    <span key={kw.id} className="text-[#8ec8c7] text-[10px]">—</span>
+                                                    <span key={kw.id} className="text-[#8A898C] text-[10px]">—</span>
                                                 )
                                             })}
                                         </div>
@@ -509,7 +509,7 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                         <span className={`px-1.5 py-0.5 rounded text-[10px] font-mono border ${
                                             first.priority === 1 ? 'bg-[#d93050]/8 border-[#d93050]/20 text-[#d93050]' :
                                             first.priority === 2 ? 'bg-[#f59e0b]/8 border-[#f59e0b]/20 text-[#b45309]' :
-                                                                   'bg-[#3aafa9]/8 border-[#3aafa9]/20 text-[#2b6e6b]'
+                                                                   'bg-[#C8EFE2] border-[#C2E8DB] text-[#5D5961]'
                                         }`}>
                                             {PRIORITY_LABELS[first.priority] ?? 'Low'}
                                         </span>
@@ -518,8 +518,8 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                     {/* Score — show first row's value */}
                                     <td className="px-4 py-2.5 align-top">
                                         {first.success_score != null
-                                            ? <span className="font-mono text-[11px] text-[#3aafa9]">{Number(first.success_score).toFixed(1)}</span>
-                                            : <span className="text-[#8ec8c7] text-[10px]">—</span>}
+                                            ? <span className="font-mono text-[11px] text-[#006825]">{Number(first.success_score).toFixed(1)}</span>
+                                            : <span className="text-[#8A898C] text-[10px]">—</span>}
                                     </td>
 
                                     {/* Active toggle — when grouped, toggles all rows together */}
@@ -528,15 +528,15 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                             // Show a combined toggle: all active = on, any inactive = off
                                             <button
                                                 onClick={() => rows.forEach(kw => toggleKwActive(kw))}
-                                                className="text-[#2b6e6b] hover:text-[#3aafa9] transition-colors"
+                                                className="text-[#5D5961] hover:text-[#006825] transition-colors"
                                                 title="Toggle all assignments">
                                                 {rows.every(kw => kw.is_active)
-                                                    ? <ToggleRight size={18} className="text-[#3aafa9]" />
+                                                    ? <ToggleRight size={18} className="text-[#006825]" />
                                                     : <ToggleLeft size={18} />}
                                             </button>
                                         ) : (
-                                            <button onClick={() => toggleKwActive(first)} className="text-[#2b6e6b] hover:text-[#3aafa9] transition-colors">
-                                                {first.is_active ? <ToggleRight size={18} className="text-[#3aafa9]" /> : <ToggleLeft size={18} />}
+                                            <button onClick={() => toggleKwActive(first)} className="text-[#5D5961] hover:text-[#006825] transition-colors">
+                                                {first.is_active ? <ToggleRight size={18} className="text-[#006825]" /> : <ToggleLeft size={18} />}
                                             </button>
                                         )}
                                     </td>
@@ -549,12 +549,12 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                                                     if (confirm(`Delete "${keyword}" from all ${rows.length} initiatives?`))
                                                         rows.forEach(kw => handleDeleteKw(kw.id))
                                                 }}
-                                                className="text-[#5a9090] hover:text-[#d93050] transition-colors p-1"
+                                                className="text-[#8A898C] hover:text-[#d93050] transition-colors p-1"
                                                 title="Delete from all initiatives">
                                                 <Trash2 size={13} />
                                             </button>
                                         ) : (
-                                            <button onClick={() => handleDeleteKw(first.id)} className="text-[#5a9090] hover:text-[#d93050] transition-colors p-1">
+                                            <button onClick={() => handleDeleteKw(first.id)} className="text-[#8A898C] hover:text-[#d93050] transition-colors p-1">
                                                 <Trash2 size={13} />
                                             </button>
                                         )}
@@ -564,7 +564,7 @@ function InitiativesTab({ initiatives, keywords, onRefresh }) {
                         })}
                         {groupedRows.length === 0 && (
                             <tr>
-                                <td colSpan={6} className="px-4 py-6 text-center text-[11px] text-[#5a9090] font-sans">No keywords found.</td>
+                                <td colSpan={6} className="px-4 py-6 text-center text-[11px] text-[#8A898C] font-sans">No keywords found.</td>
                             </tr>
                         )}
                     </tbody>
@@ -584,8 +584,8 @@ const IRS_OPTIONS    = ['', '501(c)(3)', '501(c)(4)', '501(c)(6)', '509(a)(1)', 
 function OrgField({ label, hint, children }) {
     return (
         <div className="flex flex-col gap-1">
-            <label className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090]">
-                {label}{hint && <span className="normal-case tracking-normal text-[9px] text-[#8ec8c7]"> — {hint}</span>}
+            <label className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C]">
+                {label}{hint && <span className="normal-case tracking-normal text-[9px] text-[#8A898C]"> — {hint}</span>}
             </label>
             {children}
         </div>
@@ -653,13 +653,13 @@ function OrgProfileTab({ orgProfile }) {
 
     return (
         <div className="max-w-5xl">
-            <p className="text-[12px] text-[#5a9090] font-sans mb-5">
-                This profile drives <strong className="text-[#0d2b2b]">area relevance</strong> checks and the <strong className="text-[#0d2b2b]">relevance score</strong> on every scrape run.
+            <p className="text-[12px] text-[#8A898C] font-sans mb-5">
+                This profile drives <strong className="text-[#233B22]">area relevance</strong> checks and the <strong className="text-[#233B22]">relevance score</strong> on every scrape run.
             </p>
 
             <ErrorBanner message={err} />
             {saved && (
-                <div className="flex items-center gap-2 bg-[#c2edce]/60 border border-[#3aaf6b]/30 text-[#3aaf6b] rounded-lg px-3 py-2 text-[12px] font-sans mb-4">
+                <div className="flex items-center gap-2 bg-[#006825]/10 border border-[#006825]/30 text-[#006825] rounded-lg px-3 py-2 text-[12px] font-sans mb-4">
                     ✅ Profile saved — takes effect on next scrape run
                 </div>
             )}
@@ -697,23 +697,24 @@ function OrgProfileTab({ orgProfile }) {
             </div>
 
             {/* Mission */}
-            <div className="flex flex-col gap-4 mb-4">
+            {/* <div className="flex flex-col gap-4 mb-4">
                 <OrgField label="Mission statement" hint="drives semantic mission filter">
                     <textarea
                         value={form.mission}
                         onChange={e => set('mission')(e.target.value)}
                         rows={3}
                         placeholder="Describe what your organization does and who it serves…"
-                        className="bg-[#def2f1] border border-[#b2d8d8] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#0d2b2b] placeholder-[#5a9090] outline-none focus:border-[#3aafa9] focus:shadow-[0_0_0_2px_rgba(58,175,169,0.12)] transition-all resize-y"
+                        className="bg-white border border-[#C2E8DB] rounded-md px-2.5 py-1.5 text-[12px] font-sans text-[#233B22] placeholder-[#8A898C] outline-none focus:border-[#006825] focus:shadow-[0_0_0_2px_rgba(0,104,37,0.12)] transition-all resize-y"
                     />
                 </OrgField>
-            </div>
+            </div> */
+            }
 
             {/* Geography */}
-            <p className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090] mb-2 mt-2">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C] mb-2 mt-2">
                 Grant geography — used to evaluate area relevance
             </p>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-xl">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4 p-3 bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl">
                 <OrgField label="Target states" hint="comma-separated">
                     <Input value={form.target_states} onChange={set('target_states')} placeholder="California, Nevada" />
                 </OrgField>
@@ -726,23 +727,25 @@ function OrgProfileTab({ orgProfile }) {
             </div>
 
             {/* DDG Search Config */}
-            <p className="font-mono text-[10px] uppercase tracking-wider text-[#5a9090] mb-2 mt-4">
+            <p className="font-mono text-[10px] uppercase tracking-wider text-[#8A898C] mb-2 mt-4">
                 DuckDuckGo search configuration
             </p>
-            <div className="flex flex-col gap-4 mb-6 p-3 bg-[#def2f1] border border-[#b2d8d8] rounded-xl">
+            <div className="flex flex-col gap-4 mb-6 p-3 bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl">
                 <OrgField label="Search terms" hint="appended to every keyword query, e.g. 'grant program'">
                     <ArrayEditor items={form.ddg_searching} onChange={set('ddg_searching')} placeholder="grant program" />
                 </OrgField>
                 <OrgField label="Site targets" hint="domains for site:-targeted searches">
                     <ArrayEditor items={form.ddg_sites} onChange={set('ddg_sites')} placeholder="calrecycle.ca.gov" />
                 </OrgField>
-                <p className="text-[10px] font-mono text-[#5a9090] -mt-1">
+                <p className="text-[10px] font-mono text-[#8A898C] -mt-1">
                     Search areas are derived automatically from your target counties + states above.
                 </p>
             </div>
 
             <Btn onClick={handleSave} disabled={busy}>
-                {busy ? 'Saving…' : '💾 Save profile'}
+                  {busy ? 'Saving…' : (
+                        <><Save className='w-4'/> <span>Save profile</span></>
+                    )}
             </Btn>
         </div>
     )
@@ -775,8 +778,8 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                     {/* Page header */}
                     <div className="flex items-center justify-between mb-6">
                         <div>
-                            <h1 className="font-serif font-bold text-[22px] text-[#0d2b2b]">Scraper Configuration</h1>
-                            <p className="font-mono text-[11px] text-[#5a9090] mt-0.5">Changes take effect on next scraper run</p>
+                            <h1 className="font-serif font-bold text-[22px] text-[#233B22]">Scraper Configuration</h1>
+                            <p className="font-mono text-[11px] text-[#8A898C] mt-0.5">Changes take effect on next scraper run</p>
                         </div>
                         <Btn small onClick={handleRefresh} disabled={loading}>
                             <RefreshCw size={12} className={loading ? 'animate-spin' : ''} /> Refresh
@@ -784,16 +787,16 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                     </div>
 
                     {/* Card */}
-                    <div className="bg-white border border-[#8ec8c7] rounded-2xl shadow-[0_4px_24px_rgba(58,175,169,0.08)]">
+                    <div className="bg-white border border-[#C2E8DB] rounded-2xl shadow-[0_4px_24px_rgba(0,104,37,0.08)]">
 
                         {/* Tabs */}
-                        <div className="flex gap-1 px-6 pt-4 border-b border-[#b2d8d8]">
+                        <div className="flex gap-1 px-6 pt-4 border-b border-[#C2E8DB]">
                             {TABS.map(t => (
                                 <button
                                     key={t.id}
                                     onClick={() => setTab(t.id)}
                                     className={`px-4 py-2 text-[12px] font-sans rounded-t-lg transition-colors border-b-2 -mb-px ${
-                                        tab === t.id ? 'border-[#3aafa9] text-[#3aafa9]' : 'border-transparent text-[#5a9090] hover:text-[#2b6e6b]'
+                                        tab === t.id ? 'border-[#006825] text-[#006825]' : 'border-transparent text-[#8A898C] hover:text-[#5D5961]'
                                     }`}
                                 >
                                     {t.label}
@@ -801,7 +804,7 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                                         <span className="ml-1.5 font-mono text-[10px]">{initiatives.length}</span>
                                     )}
                                     {t.id === 'org' && orgProfile?.name && (
-                                        <span className="ml-1.5 font-mono text-[10px] text-[#3aafa9]">✓</span>
+                                        <span className="ml-1.5 font-mono text-[10px] text-[#006825]">✓</span>
                                     )}
                                 </button>
                             ))}
