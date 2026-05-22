@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Initiative;
+use App\Models\Keyword;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -71,11 +72,18 @@ class InitiativeController extends Controller
     /**
      * DELETE /api/initiatives/{id}
      * Soft-delete: sets is_deleted=true, is_active=false.
+     * Also nulls out initiative_id on all child keywords so the scraper stops
+     * running searches for a decommissioned initiative. The FK uses nullOnDelete()
+     * which only fires on a hard DELETE — we must replicate that behaviour here.
      */
     public function destroy(int $id): JsonResponse
     {
         $initiative = Initiative::findOrFail($id);
         $initiative->update(['is_deleted' => true, 'is_active' => false]);
+
+        // Detach keywords — mirrors the nullOnDelete() FK behaviour for soft-deletes
+        Keyword::where('initiative_id', $initiative->id)
+            ->update(['initiative_id' => null]);
 
         return response()->json(null, 204);
     }
