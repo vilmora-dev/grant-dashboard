@@ -3,6 +3,12 @@ import { Head, router } from '@inertiajs/react'
 import { Plus, Trash2, RefreshCw, ToggleLeft, ToggleRight, X, AlertCircle, Save } from 'lucide-react'
 import AppLayout from '../../Layouts/AppLayout'
 
+// =================================================================
+// Set to true to make the entire config page read-only.
+// Flip back to false to re-enable editing.
+// =================================================================
+const CONFIG_MAINTENANCE = true
+
 /**
  * Config/Index — scraper configuration page.
  *
@@ -786,6 +792,17 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                         </Btn>
                     </div>
 
+                    {/* Maintenance banner */}
+                    {CONFIG_MAINTENANCE && (
+                        <div className="flex items-center gap-2.5 bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 mb-5 text-amber-800 text-[12px] font-sans">
+                            <AlertCircle size={15} className="shrink-0 text-amber-500" />
+                            <span>
+                                <strong className="font-semibold">Configuration is temporarily locked.</strong>{' '}
+                                You can browse initiatives, keywords, and the organization profile, but edits are disabled right now.
+                            </span>
+                        </div>
+                    )}
+
                     {/* Card */}
                     <div className="bg-white border border-[#C2E8DB] rounded-2xl shadow-[0_4px_24px_rgba(0,104,37,0.08)]">
 
@@ -811,7 +828,7 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                         </div>
 
                         {/* Body */}
-                        <div className="px-6 py-5 min-h-[400px]">
+                        <div className="px-6 py-5 min-h-[400px] relative">
                             {tab === 'initiatives' && (
                                 <InitiativesTab
                                     initiatives={initiatives}
@@ -821,6 +838,11 @@ export default function ConfigIndex({ initiatives = [], keywords = [], orgProfil
                             )}
                             {tab === 'org' && (
                                 <OrgProfileTab orgProfile={orgProfile} />
+                            )}
+
+                            {/* Maintenance overlay — blocks all interaction when CONFIG_MAINTENANCE is true */}
+                            {CONFIG_MAINTENANCE && (
+                                <div className="absolute inset-0 rounded-b-2xl cursor-not-allowed" style={{ pointerEvents: 'all' }} />
                             )}
                         </div>
                     </div>
