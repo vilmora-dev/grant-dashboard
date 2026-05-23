@@ -106,7 +106,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-DwFSNAC-.css",
+    "file": "assets/app-D8E5NWqY.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -204,7 +204,7 @@
     ]
   },
   "resources/js/Pages/Config/Index.jsx": {
-    "file": "assets/Index-DPJtOgQg.js",
+    "file": "assets/Index-Dw3HTaUb.js",
     "name": "Index",
     "src": "resources/js/Pages/Config/Index.jsx",
     "isDynamicEntry": true,
@@ -213,9 +213,9 @@
       "_vendor-inertia-DQzYFSup.js",
       "_AppLayout-CUbQYXgL.js",
       "_refresh-cw-BanBySbi.js",
+      "_trash-2-e38JB5Xf.js",
       "_createLucideIcon-CYDGQ8Ce.js",
-      "_x-CdU175E-.js",
-      "_trash-2-e38JB5Xf.js"
+      "_x-CdU175E-.js"
     ]
   },
   "resources/js/Pages/Dashboard.jsx": {
@@ -227,6 +227,16 @@
       "_vendor-react-DhM08nUf.js",
       "_vendor-inertia-DQzYFSup.js",
       "_transition-2X9OWlpo.js"
+    ]
+  },
+  "resources/js/Pages/Error.jsx": {
+    "file": "assets/Error-DEseMz2F.js",
+    "name": "Error",
+    "src": "resources/js/Pages/Error.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-DhM08nUf.js",
+      "_vendor-inertia-DQzYFSup.js"
     ]
   },
   "resources/js/Pages/Grants/Index.jsx": {
@@ -312,7 +322,7 @@
     ]
   },
   "resources/js/Pages/Team/Index.jsx": {
-    "file": "assets/Index-bIYpyORz.js",
+    "file": "assets/Index-s-jKBGgb.js",
     "name": "Index",
     "src": "resources/js/Pages/Team/Index.jsx",
     "isDynamicEntry": true,
@@ -336,7 +346,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-DA1HJAG0.js",
+    "file": "assets/app-DOmC7cJv.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -354,6 +364,7 @@
       "resources/js/Pages/Auth/VerifyEmail.jsx",
       "resources/js/Pages/Config/Index.jsx",
       "resources/js/Pages/Dashboard.jsx",
+      "resources/js/Pages/Error.jsx",
       "resources/js/Pages/Grants/Index.jsx",
       "resources/js/Pages/Profile/Edit.jsx",
       "resources/js/Pages/Profile/Partials/DeleteUserForm.jsx",
@@ -364,7 +375,7 @@
       "resources/js/Pages/Welcome.jsx"
     ],
     "css": [
-      "assets/app-DwFSNAC-.css"
+      "assets/app-D8E5NWqY.css"
     ]
   }
 }
