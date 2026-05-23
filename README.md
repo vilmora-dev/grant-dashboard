@@ -33,7 +33,7 @@ An internal tool for discovering and tracking grant opportunities. A Python scra
 | Code style | Laravel Pint (PSR-12) |
 | Containers | Docker Compose |
 
-A few dependencies worth understanding before you dig in:
+A few dependencies worth understanding:
 
 - `tightenco/ziggy` — exports named Laravel routes to the frontend so React components can call `route('dashboard')` and friends without hardcoding URLs.
 - `inertiajs/inertia-laravel` — the server-side Inertia adapter. It sends page data as JSON props instead of rendering separate HTML templates, which gives you SPA-style navigation without maintaining a standalone API.
@@ -41,7 +41,66 @@ A few dependencies worth understanding before you dig in:
 
 ---
 
-## How it's structured
+## Project structure
+
+```
+grants_app/
+├── app/
+│   ├── Http/
+│   │   ├── Controllers/
+│   │   │   ├── Auth/                          — Login, confirm password, set password
+│   │   │   ├── GrantController.php            — Dashboard page (server-paginated, 24/page)
+│   │   │   ├── GrantDataController.php        — Grant API: data, count, patch, logs
+│   │   │   ├── InitiativeController.php       — CRUD + soft-delete with keyword detachment
+│   │   │   ├── KeywordController.php
+│   │   │   ├── OrganizationProfileController.php
+│   │   │   ├── StatsController.php
+│   │   │   ├── TeamController.php
+│   │   │   └── DdgSearchComboController.php
+│   │   └── Middleware/
+│   │       ├── ForcePasswordChange.php        — Redirects if must_change_password = true
+│   │       ├── RequireFullAccess.php          — Role gate: 403 JSON or dashboard redirect
+│   │       └── HandleInertiaRequests.php      — Injects shared auth.user props
+│   └── Models/
+│       ├── GrantUnified.php                   — Primary grant model (table: grants)
+│       ├── GrantActionLog.php                 — Immutable audit log with action constants
+│       ├── Initiative.php                     — Soft-delete via is_deleted flag
+│       ├── Keyword.php
+│       ├── OrganizationProfile.php
+│       ├── DdgSearchCombo.php
+│       └── User.php
+├── bootstrap/app.php                          — Middleware stack, Inertia error page handler
+├── database/
+│   ├── factories/                             — User, GrantUnified, Initiative, Keyword
+│   └── migrations/
+├── resources/
+│   ├── css/app.css                            — Tailwind + design tokens
+│   ├── js/
+│   │   ├── app.jsx                            — Inertia bootstrap
+│   │   ├── Layouts/
+│   │   │   ├── AppLayout.jsx                  — Authenticated shell (sticky nav, search)
+│   │   │   └── GuestLayout.jsx                — Login / guest shell
+│   │   └── Pages/
+│   │       ├── Auth/                          — Login, ConfirmPassword, SetPassword
+│   │       ├── Grants/Index.jsx               — Main dashboard
+│   │       ├── Config/Index.jsx               — Initiatives, keywords, org profile
+│   │       ├── Stats/Index.jsx                — Analytics dashboard
+│   │       ├── Team/Index.jsx                 — Team management
+│   │       ├── Error.jsx                      — Inertia 404 / 403 / 500 page
+│   │       └── Welcome.jsx                    — Public landing page
+│   └── views/
+│       ├── app.blade.php                      — HTML shell
+│       └── errors/404.blade.php               — Server-side error page (no JS)
+├── routes/
+│   ├── api.php                                — JSON API endpoints
+│   ├── auth.php                               — Login, logout, confirm/change password
+│   └── web.php                                — Inertia page routes
+├── docker-compose.yml
+├── vite.config.js
+└── phpunit.xml
+```
+
+### How it works
 
 Requests flow through three layers: **Browser → Laravel → MySQL**.
 
@@ -248,115 +307,13 @@ tests/
 
 ---
 
-## Deployment
-
-The production setup uses the same `docker-compose.yml`. A few things to take care of before going live:
-
-**Build the frontend assets:**
-```bash
-npm run build
-```
-
-**Set production values in `.env`:**
-```
-APP_ENV=production
-APP_DEBUG=false
-APP_URL=https://your-domain.com
-```
-
-**TLS** — Nginx inside the container serves on port 80, mapped to port 8000 on the host. Put Cloudflare or a host-level reverse proxy in front to handle TLS.
-
-**Queue worker** — background jobs use the `database` queue driver. Make sure it's running:
-```bash
-docker compose exec php php artisan queue:work --daemon
-```
-
-**Cache and sessions** both default to the `database` driver, so Redis isn't required. If you need to reduce database load down the line, switching `SESSION_DRIVER` to `redis` is the easiest lever.
-
-**Email** — there's no email service wired up. `MAIL_MAILER=log` captures everything in `storage/logs/laravel.log`. If you add one later, update `MAIL_MAILER`, `MAIL_HOST`, and `MAIL_FROM_ADDRESS` in `.env`.
-
----
-
-## Project structure
-
-```
-grants_app/
-├── app/
-│   ├── Http/
-│   │   ├── Controllers/
-│   │   │   ├── Auth/                          — Login, confirm password, set password
-│   │   │   ├── GrantController.php            — Dashboard page (server-paginated, 24/page)
-│   │   │   ├── GrantDataController.php        — Grant API: data, count, patch, logs
-│   │   │   ├── InitiativeController.php       — CRUD + soft-delete with keyword detachment
-│   │   │   ├── KeywordController.php
-│   │   │   ├── OrganizationProfileController.php
-│   │   │   ├── StatsController.php
-│   │   │   ├── TeamController.php
-│   │   │   └── DdgSearchComboController.php
-│   │   └── Middleware/
-│   │       ├── ForcePasswordChange.php        — Redirects if must_change_password = true
-│   │       ├── RequireFullAccess.php          — Role gate: 403 JSON or dashboard redirect
-│   │       └── HandleInertiaRequests.php      — Injects shared auth.user props
-│   └── Models/
-│       ├── GrantUnified.php                   — Primary grant model (table: grants)
-│       ├── GrantActionLog.php                 — Immutable audit log with action constants
-│       ├── Initiative.php                     — Soft-delete via is_deleted flag
-│       ├── Keyword.php
-│       ├── OrganizationProfile.php
-│       ├── DdgSearchCombo.php
-│       └── User.php
-├── bootstrap/app.php                          — Middleware stack, Inertia error page handler
-├── database/
-│   ├── factories/                             — User, GrantUnified, Initiative, Keyword
-│   └── migrations/
-├── resources/
-│   ├── css/app.css                            — Tailwind + design tokens
-│   ├── js/
-│   │   ├── app.jsx                            — Inertia bootstrap
-│   │   ├── Layouts/
-│   │   │   ├── AppLayout.jsx                  — Authenticated shell (sticky nav, search)
-│   │   │   └── GuestLayout.jsx                — Login / guest shell
-│   │   └── Pages/
-│   │       ├── Auth/                          — Login, ConfirmPassword, SetPassword
-│   │       ├── Grants/Index.jsx               — Main dashboard
-│   │       ├── Config/Index.jsx               — Initiatives, keywords, org profile
-│   │       ├── Stats/Index.jsx                — Analytics dashboard
-│   │       ├── Team/Index.jsx                 — Team management
-│   │       ├── Error.jsx                      — Inertia 404 / 403 / 500 page
-│   │       └── Welcome.jsx                    — Public landing page
-│   └── views/
-│       ├── app.blade.php                      — HTML shell
-│       └── errors/404.blade.php               — Server-side error page (no JS)
-├── routes/
-│   ├── api.php                                — JSON API endpoints
-│   ├── auth.php                               — Login, logout, confirm/change password
-│   └── web.php                                — Inertia page routes
-├── docker-compose.yml
-├── vite.config.js
-└── phpunit.xml
-```
-
----
-
-## Extending the app
-
-**New API endpoint** — add the route to `routes/api.php` (wrap with `full.access` if it's admin-only), create or extend a controller, and add a feature test.
-
-**New page** — create a JSX file under `resources/js/Pages/`, add a route in `routes/web.php` pointing to `Inertia::render(...)`, and pass any server-side data as props. Avoid client-side fetching unless the data genuinely needs to refresh on its own.
-
-**New role** — the `role` column is a plain string. Add a middleware that checks for it, then register it as an alias in `bootstrap/app.php`.
-
-**New grant field** — add a migration on the `grants` table, add the field to `GrantUnified::$fillable`, and if it should be editable from the frontend, add it to the validation rules in `GrantDataController::updateGrant()`.
-
----
-
 ## The scraper
 
 The grants dashboard is fed by a separate Python pipeline in `../my_scraper/`. The two projects share only the MySQL database — the `grants` table is the handoff point.
 
 The scraper loads the current initiative's keywords, searches six sources in parallel (Terra Viva RSS, Grants.gov, CA Grants Portal, Simpler.Grants.gov, OpenFEMA HMA, and DuckDuckGo), scores results against the foundation's mission using a local sentence-transformer model, runs a hard discard pass, and upserts everything into `grants`.
 
-It rotates through initiatives one per run, keeping each execution under 25 minutes for a scheduled GitHub Actions job.
+It rotates through initiatives one per run, keeping each execution under 60 minutes for a scheduled GitHub Actions job.
 
 ```bash
 cd my_scraper
@@ -372,20 +329,6 @@ python tests/test_ddg.py
 ```
 
 The scraper has its own `.env` and its own README with the full configuration reference.
-
----
-
-## Things worth knowing
-
-**No email service.** `MAIL_MAILER=log` — mail output goes to `storage/logs/laravel.log`. There's no forgot-password flow and no email verification. Admins provision accounts and reset passwords manually through the Team panel.
-
-**Initiatives use a soft-delete flag, not `SoftDeletes`.** The `is_deleted` boolean was chosen over Laravel's built-in trait to prevent the scraper from picking up deleted initiatives as still active. Grants are never deleted either — they're hidden with the `ignore` flag.
-
-**`nullOnDelete()` only fires on hard deletes.** The `keywords.initiative_id` foreign key is configured with `nullOnDelete()` in the migration, but that only runs when a row is hard-deleted from the database. Since initiative deletes only flip `is_deleted = true`, `InitiativeController::destroy()` manually nulls the keyword association before soft-deleting.
-
-**Tests require MySQL.** `phpunit.xml` forces `DB_CONNECTION=mysql` and targets `grantsdb_test`. SQLite won't work here. The test database needs to exist before you run the suite.
-
-**Vite's `manualChunks` needs the function form.** The object form causes React to get bundled into the Inertia chunk (~336 KB combined). The function form in `vite.config.js` keeps them separate: `vendor-react` at ~145 KB and `vendor-inertia` at ~194 KB.
 
 ---
 
