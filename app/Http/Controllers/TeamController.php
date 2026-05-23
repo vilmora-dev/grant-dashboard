@@ -42,6 +42,7 @@ class TeamController extends Controller
         $user = User::create([
             'name'                 => $data['name'],
             'email'                => $data['email'],
+            'email_verified_at'    => now(),
             'password'             => Hash::make($plain),
             'role'                 => $data['role'] ?? 'standard',
             'must_change_password' => true,

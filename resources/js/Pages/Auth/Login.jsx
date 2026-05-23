@@ -1,7 +1,7 @@
-import { Head, Link, useForm } from '@inertiajs/react'
+import { Head, useForm } from '@inertiajs/react'
 import GuestLayout from '../../Layouts/GuestLayout'
 
-export default function Login({ status, canResetPassword }) {
+export default function Login({ status }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         email: '',
         password: '',
@@ -76,14 +76,6 @@ export default function Login({ status, canResetPassword }) {
 
                     {/* Actions */}
                     <div className="flex items-center justify-between pt-1">
-                        {/* {canResetPassword && (
-                            <Link
-                                href={route('password.request')}
-                                className="font-mono text-[12px] text-[#5D5961] hover:text-[#233B22] underline transition-colors"
-                            >
-                                Forgot password?
-                            </Link>
-                        )} */}
                         <button
                             type="submit"
                             disabled={processing}
