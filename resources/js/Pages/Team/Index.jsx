@@ -103,7 +103,7 @@ function CreatePanel({ onCreated, onClose }) {
     const set = (k) => (v) => setForm(f => ({ ...f, [k]: v }))
 
     const emailTemplate = done
-        ? `Subject: Your Delta Rising Foundation dashboard access\n\nHi ${done.user.name},\n\nYour account has been created on the grants dashboard.\n\n  Login:    https://${window.location.host}/login\n  Email:    ${done.user.email}\n  Password: ${done.temp_password}\n\nYou will be prompted to set a new password on first login.\n\n— ${window.location.host}`
+        ? `Subject: Your Delta Rising Foundation Grants dashboard access\n\nHi ${done.user.name},\n\nYour account has been created on the grants dashboard.\n\n  Login:    https://${window.location.host}/login\n  Email:    ${done.user.email}\n  Password: ${done.temp_password}\n\nYou will be prompted to set a new password on first login.\n\n— ${window.location.host}`
         : ''
 
     const [emailBlurred, setEmailBlurred] = useState(false)
