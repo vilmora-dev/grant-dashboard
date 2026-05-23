@@ -31,5 +31,16 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
-        //
+        // Render branded error pages for Inertia requests
+        $exceptions->respond(function (\Symfony\Component\HttpFoundation\Response $response) {
+            $status = $response->getStatusCode();
+
+            if (in_array($status, [403, 404, 500, 503]) && request()->header('X-Inertia')) {
+                return \Inertia\Inertia::render('Error', ['status' => $status])
+                    ->toResponse(request())
+                    ->setStatusCode($status);
+            }
+
+            return $response;
+        });
     })->create();
