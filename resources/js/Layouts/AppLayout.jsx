@@ -163,7 +163,7 @@ export default function AppLayout({
                             </button>
                         </div>
                     ) : (
-                        <div className="flex flex-1 items-center justify-between gap-4">
+                        <div className="flex flex-1 items-center justify-end md:justify-between gap-4">
 
                             {/* Stat pills */}
                             <div className="flex gap-1.5 md:gap-2">
