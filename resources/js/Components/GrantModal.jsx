@@ -321,14 +321,14 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
 
             {grant.description && <RichText text={grant.description} className="text-[13.5px] text-[#5D5961] leading-relaxed" />}
 
-            {grant.summary && (
+            {/* {grant.summary && (
                 <div className="bg-[#D4D9FF]/30 border border-[#D4D9FF] rounded-xl p-4">
                     <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#4a5296] uppercase tracking-widest mb-2">
                         <Sparkles size={10} /> Summary
                     </div>
                     <RichText text={grant.summary} className="text-[13px] text-[#5D5961] leading-relaxed" />
                 </div>
-            )}
+            )} */}
 
             <div className="bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl p-4 flex flex-col gap-4">
                 {amount && (
