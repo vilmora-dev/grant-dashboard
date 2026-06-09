@@ -1,4 +1,4 @@
-import{r as n,j as e}from"./vendor-react-DhM08nUf.js";import{b as z}from"./vendor-inertia-DQzYFSup.js";import{A as I,U as M}from"./AppLayout-CUbQYXgL.js";import{c as R}from"./createLucideIcon-CYDGQ8Ce.js";import{X as L}from"./x-CdU175E-.js";import{C as _,a as U}from"./copy-CEMBKrOJ.js";/**
+import{r as n,j as e}from"./vendor-react-DhM08nUf.js";import{b as z}from"./vendor-inertia-DQzYFSup.js";import{A as I,U as M}from"./AppLayout-BjFMAlQj.js";import{c as R}from"./createLucideIcon-CYDGQ8Ce.js";import{X as L}from"./x-CdU175E-.js";import{C as _,a as U}from"./copy-CEMBKrOJ.js";/**
  * @license lucide-react v0.383.0 - ISC
  *
  * This source code is licensed under the ISC license.
