@@ -166,7 +166,7 @@ export default function AppLayout({
                         <div className="flex flex-1 items-center justify-end md:justify-between gap-4">
 
                             {/* Stat pills */}
-                            <div className="flex gap-1.5 md:gap-2">
+                            <div className="hidden md:flex gap-1.5 md:gap-2">
                                 <div className="hidden md:block w-px h-8 bg-[#C2E8DB]" />
                                 {statPills.map(({ val, label, color }) => (
                                     <div key={label}
