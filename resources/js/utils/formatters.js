@@ -23,6 +23,14 @@ export function formatAmount(raw) {
     if (!raw || raw === 'See website' || raw === 'null') return null
     const s = String(raw)
 
+    // "Between $200,000 and $5,000,000" / "between X and Y"
+    const betweenMatch = s.match(/between\s+([^\s]+)\s+and\s+([^\s]+)/i)
+    if (betweenMatch) {
+        const floor   = _parseDollar(betweenMatch[1])
+        const ceiling = _parseDollar(betweenMatch[2])
+        if (!isNaN(floor) && !isNaN(ceiling)) return `${_compactNum(floor)} – ${_compactNum(ceiling)}`
+    }
+
     // "from $150,000 to $1,500,000"
     const rangeMatch = s.match(/from\s+([^\s]+)\s+to\s+([^\s]+)/i)
     if (rangeMatch) {
@@ -47,6 +55,14 @@ export function formatAmount(raw) {
 export function formatAmountFull(raw) {
     if (!raw || raw === 'See website' || raw === 'null') return null
     const s = String(raw)
+
+    // "Between $200,000 and $5,000,000" / "between X and Y"
+    const betweenMatch = s.match(/between\s+([^\s]+)\s+and\s+([^\s]+)/i)
+    if (betweenMatch) {
+        const floor   = _parseDollar(betweenMatch[1])
+        const ceiling = _parseDollar(betweenMatch[2])
+        if (!isNaN(floor) && !isNaN(ceiling)) return `${_fullNum(floor)} – ${_fullNum(ceiling)}`
+    }
 
     // "from $150,000 to $1,500,000"
     const rangeMatch = s.match(/from\s+([^\s]+)\s+to\s+([^\s]+)/i)
