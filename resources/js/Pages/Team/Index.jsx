@@ -513,6 +513,7 @@ export default function TeamIndex() {
                             No team members yet.
                         </div>
                     ) : (
+                        <div className="overflow-x-auto">
                         <table className="w-full text-left">
                             <thead>
                                 <tr className="border-b border-[#C2E8DB] bg-[#C8EFE2]">
@@ -556,6 +557,7 @@ export default function TeamIndex() {
                                 ))}
                             </tbody>
                         </table>
+                        </div>
                     )}
                 </div>
 
