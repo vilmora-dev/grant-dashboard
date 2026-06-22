@@ -7,7 +7,7 @@ import AppLayout from '../../Layouts/AppLayout'
 // Set to true to make the entire config page read-only.
 // Flip back to false to re-enable editing.
 // =================================================================
-const CONFIG_MAINTENANCE = true
+const CONFIG_MAINTENANCE = false
 
 /**
  * Config/Index — scraper configuration page.
