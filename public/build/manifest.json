@@ -204,7 +204,7 @@
     ]
   },
   "resources/js/Pages/Config/Index.jsx": {
-    "file": "assets/Index-Dj7WeWtc.js",
+    "file": "assets/Index-oU-rgBnd.js",
     "name": "Index",
     "src": "resources/js/Pages/Config/Index.jsx",
     "isDynamicEntry": true,
@@ -213,9 +213,9 @@
       "_vendor-inertia-DQzYFSup.js",
       "_AppLayout-58nxEZ0B.js",
       "_refresh-cw-BanBySbi.js",
-      "_trash-2-e38JB5Xf.js",
       "_createLucideIcon-CYDGQ8Ce.js",
-      "_x-CdU175E-.js"
+      "_x-CdU175E-.js",
+      "_trash-2-e38JB5Xf.js"
     ]
   },
   "resources/js/Pages/Dashboard.jsx": {
@@ -346,7 +346,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-CAR3EOrH.js",
+    "file": "assets/app-CLNgmAwG.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
