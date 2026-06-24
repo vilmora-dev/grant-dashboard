@@ -13,6 +13,7 @@ class GrantActionLog extends Model
     protected $fillable = [
         'grant_id',
         'user_id',
+        'deleted_user_name',
         'action',
         'old_value',
         'new_value',

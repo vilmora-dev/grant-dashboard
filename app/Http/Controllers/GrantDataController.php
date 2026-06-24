@@ -199,7 +199,9 @@ class GrantDataController extends Controller
             'action'     => $log->action,
             'old_value'  => $log->old_value,
             'new_value'  => $log->new_value,
-            'user_name'  => $log->user?->name ?? ($log->action === GrantActionLog::ACTION_SCRAPED ? 'Scraper Agent' : 'System'),
+            'user_name'  => $log->user?->name
+                ?? ($log->deleted_user_name ? "{$log->deleted_user_name} (deleted)" : null)
+                ?? ($log->action === GrantActionLog::ACTION_SCRAPED ? 'Scraper Agent' : 'System'),
             'is_me'      => $log->user_id === $user->id,
             'created_at' => $log->created_at->toISOString(),
         ]);
