@@ -34,6 +34,8 @@ class GrantActionLog extends Model
     const ACTION_UNSTARRED      = 'unstarred';
     const ACTION_APPLIED        = 'applied';
     const ACTION_UNAPPLIED      = 'unapplied';
+    const ACTION_REVIEWED       = 'reviewed';      // marked as looked-over, short of Applied
+    const ACTION_UNREVIEWED     = 'unreviewed';
     const ACTION_DISCARDED      = 'discarded';
     const ACTION_RESTORED       = 'restored';
     const ACTION_NOTES_UPDATED  = 'notes_updated';
@@ -101,6 +103,7 @@ class GrantActionLog extends Model
             return match (true) {
                 $key === 'starred'        => $val ? self::ACTION_STARRED         : self::ACTION_UNSTARRED,
                 $key === 'applied'        => $val ? self::ACTION_APPLIED          : self::ACTION_UNAPPLIED,
+                $key === 'reviewed'       => $val ? self::ACTION_REVIEWED         : self::ACTION_UNREVIEWED,
                 $key === 'ignore'         => $val ? self::ACTION_DISCARDED        : self::ACTION_RESTORED,
                 $key === 'notes'          => self::ACTION_NOTES_UPDATED,
                 $key === 'amount'         => self::ACTION_AMOUNT_EDITED,
@@ -113,6 +116,19 @@ class GrantActionLog extends Model
         // ignore + discard_reason arrive together — treat as a single discard
         if (isset($data['ignore'], $data['discard_reason']) && $data['ignore']) {
             return self::ACTION_DISCARDED;
+        }
+
+        if (array_key_exists('applied', $data) && $data['applied'] === true) {
+            return self::ACTION_APPLIED;
+        }
+        if (array_key_exists('reviewed', $data) && $data['reviewed'] === true) {
+            return self::ACTION_REVIEWED;
+        }
+        if (
+            array_key_exists('applied', $data) && $data['applied'] === false
+            && array_key_exists('reviewed', $data) && $data['reviewed'] === false
+        ) {
+            return self::ACTION_UNAPPLIED;
         }
 
         return self::ACTION_UPDATED;

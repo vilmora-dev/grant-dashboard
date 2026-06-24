@@ -58,6 +58,8 @@ const ACTION_META = {
     unstarred:        { label: 'Unstarred',          color: '#8A898C', icon: '☆' },
     applied:          { label: 'Marked as Applied',  color: '#006825', icon: '✓' },
     unapplied:        { label: 'Unmarked Applied',   color: '#8A898C', icon: '✗' },
+    reviewed:         { label: 'Marked as Reviewed', color: '#072F98', icon: '◐' },
+    unreviewed:       { label: 'Unmarked Reviewed',  color: '#8A898C', icon: '✗' },
     discarded:        { label: 'Discarded',          color: '#F5601D', icon: '⊘' },
     restored:         { label: 'Restored',           color: '#006825', icon: '↺' },
     notes_updated:    { label: 'Notes updated',      color: '#072F98', icon: '✎' },
@@ -182,7 +184,7 @@ function HistoryPanel({ grantId }) {
                     const isLast    = i === logs.length - 1
                     // Only show diff for edit-type actions that have meaningful old/new values
                     const showDiff  = log.old_value && log.new_value
-                        && !['starred','unstarred','applied','unapplied','discarded','restored','scraped','ai_analyzed','claimed','unclaimed','reassigned'].includes(log.action)
+                        && !['starred','unstarred','applied','unapplied','reviewed','unreviewed','discarded','restored','scraped','ai_analyzed','claimed','unclaimed','reassigned'].includes(log.action)
 
                     return (
                         <li key={log.id} className="relative flex gap-3 pb-5">
@@ -283,9 +285,10 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
     const deadline  = formatDeadline(grant.deadline)
     const u         = urgencyClass(deadline?.diff)
     const amount    = formatAmountFull(grant.amount)
-    const isApplied = !!grant.applied
-    const isIgnored = !!grant.ignore
-    const isStarred = !!grant.starred
+    const isApplied  = !!grant.applied
+    const isReviewed = !!grant.reviewed
+    const isIgnored  = !!grant.ignore
+    const isStarred  = !!grant.starred
     const score     = grant.relevance_score ?? 0
     const claimedBy = grant.claimed_by ?? null
     const myUserId  = auth?.user?.id
@@ -304,6 +307,13 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
             setPatching(false)
         }
     }, [grant, onUpdate])
+
+    const setStatus = useCallback((next) => {
+        patch({
+            applied:  next === 'applied',
+            reviewed: next === 'reviewed',
+        })
+    }, [patch])
 
     const doClaim = useCallback(async (action) => {
         setClaiming(true); setClaimErr(null)
@@ -338,6 +348,7 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
                     </span>
                 )}
                 {isApplied && <Tag color="green"><CheckCheck size={9} /> Applied</Tag>}
+                {!isApplied && isReviewed && <Tag color="accent"><CheckCheck size={9} /> Reviewed</Tag>}
                 {isIgnored && <Tag color="red"><EyeOff size={9} /> Ignored</Tag>}
                 {isStarred && <Tag color="gold"><Star size={9} /> Starred</Tag>}
             </div>
@@ -465,10 +476,11 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
                 icon={<Star size={15} strokeWidth={isStarred ? 0 : 1.8} fill={isStarred ? 'currentColor' : 'none'} />}
                 label={isStarred ? 'Starred' : 'Star this grant'} hint={isStarred ? 'Click to remove' : 'Bookmark for quick retrieval'}
                 activeClass="border-[#d4a017] bg-[#fffbe6] text-[#d4a017]" />
-            <ActionButton active={isApplied} disabled={patching} onClick={() => patch({ applied: !isApplied })}
-                icon={<CheckCheck size={15} />}
-                label={isApplied ? 'Applied ✓' : 'Mark as Applied'} hint={isApplied ? 'Click to unmark' : "You've submitted an application"}
-                activeClass="border-[#006825]/50 bg-[#006825]/10 text-[#006825]" />
+            <StatusLadder
+                status={isApplied ? 'applied' : isReviewed ? 'reviewed' : 'relevant'}
+                disabled={patching}
+                onChange={setStatus}
+            />
 
             <div ref={discardRef} className="flex flex-col gap-0">
                 {isIgnored ? (
@@ -654,6 +666,49 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
 }
 
 // Sub-components
+
+/**
+ * StatusLadder — a single 3-segment control for New / Reviewed / Applied.
+ * Rendered as one connected pill (not three stacked buttons) so it visually
+ * reads as "one status, pick a stage" rather than independent toggles —
+ * picking a segment always replaces the current status, it never combines.
+ * Discard/Ignore is intentionally not part of this — it's a separate branch
+ * with its own button + reason flow, not a rung on this ladder.
+ */
+function StatusLadder({ status, disabled, onChange }) {
+    const STAGES = [
+        { val: 'relevant', label: 'New',      hint: 'Not yet looked at' },
+        { val: 'reviewed', label: 'Reviewed', hint: "Looked over, not applied yet" },
+        { val: 'applied',  label: 'Applied',  hint: "You've submitted an application" },
+    ]
+    const activeIdx = STAGES.findIndex(s => s.val === status)
+
+    return (
+        <div className="flex flex-col gap-1.5">
+            <div className="flex rounded-xl border border-[#C2E8DB] bg-white p-1 gap-1">
+                {STAGES.map((s, i) => {
+                    const active = s.val === status
+                    return (
+                        <button key={s.val} disabled={disabled} onClick={() => onChange(s.val)}
+                            title={s.hint}
+                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-[12px] font-medium transition-all disabled:opacity-50
+                                ${active
+                                    ? i === 2 ? 'bg-[#006825] text-white'
+                                      : i === 1 ? 'bg-[#072F98]/10 text-[#072F98] border border-[#072F98]/30'
+                                      : 'bg-[#C8EFE2] text-[#006825]'
+                                    : 'text-[#8A898C] hover:bg-[#C8EFE2]/40'}`}>
+                            {active && i > 0 && <CheckCheck size={11} className="shrink-0" />}
+                            {s.label}
+                        </button>
+                    )
+                })}
+            </div>
+            <p className="font-mono text-[10px] text-[#8A898C] text-center">
+                {STAGES[activeIdx]?.hint ?? ''}
+            </p>
+        </div>
+    )
+}
 
 function ActionButton({ active, onClick, disabled, icon, label, hint, activeClass }) {
     return (

@@ -1,7 +1,7 @@
 import { SOURCE_LABELS } from '../hooks/useFilteredGrants'
 import { LayoutGrid, List, Filter, X, RefreshCw } from 'lucide-react'
 
-const STATUS_LABELS = { relevant: 'Relevant', applied: 'Applied', ignored: 'Ignored', reviewed: 'Reviewed' }
+const STATUS_LABELS = { all: 'All', relevant: 'New', applied: 'Applied', ignored: 'Ignored', reviewed: 'Reviewed' }
 const CLAIM_LABELS  = { mine: 'My Grants', available: 'Available', claimed: 'Claimed' }
 const SORT_LABELS   = { newest: 'Newest', deadline: 'By Deadline', amount: 'By Amount', title: 'By Title', source: 'By Source' }
 const DEADLINE_LABELS = { week: 'Closing this week', month: 'Closing this month', expired: 'Expired' }
@@ -45,8 +45,8 @@ export default function Controls({
 }) {
     const chips = []
 
-    if (filters.statusFilter !== 'relevant') {
-        chips.push({ key: 'status', label: STATUS_LABELS[filters.statusFilter] ?? filters.statusFilter, onRemove: () => onStatusFilter('relevant') })
+    if (filters.statusFilter !== 'all') {
+        chips.push({ key: 'status', label: STATUS_LABELS[filters.statusFilter] ?? filters.statusFilter, onRemove: () => onStatusFilter('all') })
     }
     if (filters.claimFilter !== 'any') {
         chips.push({ key: 'claim', label: CLAIM_LABELS[filters.claimFilter] ?? filters.claimFilter, onRemove: () => onClaimFilter('any') })

@@ -15,7 +15,7 @@ class GrantController extends Controller
      *
      * Query params:
      *   page             int     default 1
-     *   status           string  relevant|applied|ignored|reviewed   default relevant
+     *   status           string  all|relevant|applied|ignored|reviewed   default all
      *   source           string  all|grants_gov|web|…       default all
      *   sort             string  match|newest|deadline|amount|title|source  default match
      *   search           string  full-text on title+description+eligibility+agency_name
@@ -30,12 +30,16 @@ class GrantController extends Controller
         $q = GrantUnified::query()->with('claimedBy:id,name');
 
         // ── Status ───────────────────────────────────────────────────────
-        $status = $request->query('status', 'relevant');
+        $status = $request->query('status', 'all');
         match ($status) {
+            'all'      => null, // frontend-only bucket — no filter applied
             'applied'  => $q->where('applied', true),
             'ignored'  => $q->where('ignore', true),
             'reviewed' => $q->where('reviewed', true),
-            default    => $q->where('ignore', false)->where('applied', false),
+            // "New" = hasn't moved anywhere on the ladder yet, and hasn't
+            // been discarded. Must exclude reviewed=true too, otherwise a
+            // grant moved to Reviewed still shows up (and counts) as New.
+            default    => $q->where('ignore', false)->where('applied', false)->where('reviewed', false),
         };
 
         // ── Source / scrape_method filter ─────────────────────────────────
@@ -141,7 +145,7 @@ class GrantController extends Controller
 
         // ── Counts (always over full table, not filtered) ─────────────────
         $totalInDb    = GrantUnified::count();
-        $relevantCnt  = GrantUnified::where('ignore', false)->where('applied', false)->count();
+        $relevantCnt  = GrantUnified::where('ignore', false)->where('applied', false)->where('reviewed', false)->count();
         $appliedCnt   = GrantUnified::where('applied', true)->count();
         $ignoredCnt   = GrantUnified::where('ignore', true)->count();
         $reviewedCnt  = GrantUnified::where('reviewed', true)->count();

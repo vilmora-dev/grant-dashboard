@@ -112,7 +112,7 @@ export default function FilterSidebar({
     const hasActive = filters.search
         || filters.sourceFilter    !== 'all'
         || filters.sortBy          !== 'match'
-        || filters.statusFilter    !== 'relevant'
+        || filters.statusFilter    !== 'all'
         || filters.starredOnly     !== false
         || filters.minScore        > 0
         || filters.deadlineWindow  !== 'any'
@@ -122,10 +122,11 @@ export default function FilterSidebar({
     const selectCls = 'bg-white border border-[#C2E8DB] rounded-lg px-3 py-2 text-[12px] text-[#233B22] outline-none cursor-pointer focus:border-[#006825] transition-colors w-full'
 
     const STATUS_OPTIONS = [
-        { val: 'relevant', label: 'Relevant', count: statusCounts.relevant },
+        { val: 'all',      label: 'All',      count: statusCounts.total    },
+        { val: 'relevant', label: 'New',      count: statusCounts.relevant },
+        { val: 'reviewed', label: 'Reviewed', count: statusCounts.reviewed },
         { val: 'applied',  label: 'Applied',  count: statusCounts.applied  },
         { val: 'ignored',  label: 'Ignored',  count: statusCounts.ignored  },
-        { val: 'reviewed', label: 'Reviewed', count: statusCounts.reviewed },
     ]
 
     // Claim-status options — visual language matches the lavender claim
@@ -267,7 +268,7 @@ export default function FilterSidebar({
                 // AppLayout's `max-w-[1600px] mx-auto px-4 md:px-8` main container
                 // so the rail lines up with the grants column at every width
                 // instead of drifting once the viewport exceeds 1600px.
-                <aside className="hidden md:flex flex-col shrink-0 fixed top-4 h-[calc(100vh-2rem)]
+                <aside className="hidden md:flex flex-col shrink-0 fixed top-[80px] h-[calc(100vh-6rem)]
                     bg-white border border-[#C2E8DB] rounded-2xl overflow-hidden w-[260px] z-10"
                     style={{ left: 'max(1rem, calc((100vw - 1600px) / 2 + 2rem))' }}>
                     <div className="flex items-center justify-between shrink-0 border-b border-[#C2E8DB] p-3">

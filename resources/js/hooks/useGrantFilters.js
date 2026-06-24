@@ -75,7 +75,7 @@ export function useGrantFilters() {
 
     function resetFilters() {
         navigate({
-            status:          'relevant',
+            status:          'all',
             source:          'all',
             sort:            'match',
             search:          '',
@@ -91,7 +91,7 @@ export function useGrantFilters() {
     // Normalised filter object (matches Controls.jsx expectations)
     const normalisedFilters = {
         search:          filters.search          ?? '',
-        statusFilter:    filters.status          ?? 'relevant',
+        statusFilter:    filters.status          ?? 'all',
         sourceFilter:    filters.source          ?? 'all',
         sortBy:          filters.sort            ?? 'match',
         starredOnly:     filters.starred         ?? false,

@@ -149,7 +149,7 @@ export default function GrantsIndex() {
                                 hasFilters={
                                     filters.search ||
                                     filters.sourceFilter !== 'all' ||
-                                    filters.statusFilter !== 'relevant' ||
+                                    filters.statusFilter !== 'all' ||
                                     filters.starredOnly ||
                                     filters.minScore > 0 ||
                                     filters.deadlineWindow !== 'any' ||
