@@ -27,6 +27,9 @@ Route::middleware('auth:web')->group(function () {
     Route::patch('/grants/{id}',     [GrantDataController::class, 'updateGrant']);
     Route::patch('/grants_gov/{id}', [GrantDataController::class, 'updateGrantGov']);
 
+    // Claim / release / take-over — "I'm working on this" tracking
+    Route::post('/grants/{id}/claim', [GrantDataController::class, 'claimGrant']);
+
     // Grant action log — full access users see all entries, standard users see their own
     Route::get('/grants/{id}/logs',  [GrantDataController::class, 'logs']);
 });

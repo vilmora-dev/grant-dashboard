@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Calendar, Users, ArrowRight, CheckCheck, EyeOff, Star } from 'lucide-react'
+import { Calendar, Users, ArrowRight, CheckCheck, EyeOff, Star, UserCheck } from 'lucide-react'
 import { formatAmount, formatDeadline, urgencyClass, stripHtml } from '../utils/formatters'
 import { patchGrant } from '../utils/api'
 
@@ -37,6 +37,7 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
     const isIgnored = !!grant.ignore
     const plainDesc = stripHtml(grant.description)
     const score     = grant.relevance_score ?? 0
+    const claimedBy = grant.claimed_by ?? null
 
     const [starred, setStarred] = useState(!!grant.starred)
     const [saving,  setSaving]  = useState(false)
@@ -112,6 +113,14 @@ export default function GrantCard({ grant, index = 0, onSelect, isLastSelected, 
                 {isIgnored && (
                     <span className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded border bg-[#d93050]/10 border-[#d93050]/25 text-[#d93050]">
                         <EyeOff size={9} /> Ignored
+                    </span>
+                )}
+                {claimedBy && (
+                    <span
+                        title={`Claimed by ${claimedBy.name}`}
+                        className="inline-flex items-center gap-1 font-mono text-[9px] uppercase tracking-wide px-2 py-0.5 rounded border bg-[#D4D9FF]/30 border-[#D4D9FF] text-[#4a5296]"
+                    >
+                        <UserCheck size={9} /> {claimedBy.name}
                     </span>
                 )}
                 {score > 0 && <RelevanceBadge score={score} />}

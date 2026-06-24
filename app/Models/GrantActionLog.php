@@ -43,6 +43,9 @@ class GrantActionLog extends Model
     const ACTION_UPDATED        = 'updated';       // multi-field patch fallback
     const ACTION_SCRAPED        = 'scraped';       // written by the scraper pipeline
     const ACTION_AI_ANALYZED    = 'ai_analyzed';   // written by the AI pipeline
+    const ACTION_CLAIMED        = 'claimed';       // user claimed (started working) a grant
+    const ACTION_UNCLAIMED      = 'unclaimed';     // user released a grant they had claimed
+    const ACTION_REASSIGNED     = 'reassigned';    // claim was taken over from another user
 
     // ── Long-text fields that get truncated in the log ────────────────────────
     // These fields already live in full on the grants row; the log only needs

@@ -25,7 +25,7 @@ class GrantController extends Controller
      */
     public function index(Request $request)
     {
-        $q = GrantUnified::query();
+        $q = GrantUnified::query()->with('claimedBy:id,name');
 
         // ── Status ───────────────────────────────────────────────────────
         $status = $request->query('status', 'relevant');

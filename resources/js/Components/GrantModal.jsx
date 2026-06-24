@@ -3,10 +3,11 @@ import {
     X, ExternalLink, Globe, DollarSign, Calendar, Users,
     Sparkles, AlertCircle, Pencil, Zap, History,
     CheckCheck, EyeOff, Star, Save, RotateCcw, Trash2, ChevronDown, StarOff, RefreshCw,
+    UserCheck, UserMinus, UserCog,
 } from 'lucide-react'
 import { usePage } from '@inertiajs/react'
 import { formatAmountFull, formatDeadline, urgencyClass } from '../utils/formatters'
-import { patchGrant, fetchGrantLogs } from '../utils/api'
+import { patchGrant, fetchGrantLogs, claimGrant } from '../utils/api'
 
 // HTML helpers
 
@@ -64,8 +65,11 @@ const ACTION_META = {
     deadline_edited:  { label: 'Deadline edited',    color: '#072F98', icon: '✎' },
     field_updated:    { label: 'Field updated',      color: '#072F98', icon: '✎' },
     updated:          { label: 'Updated',            color: '#072F98', icon: '✎' },
-    scraped:          { label: 'Scraped',            color: '#8A898C', icon: '⟳' },
+    scraped:          { label: 'Discovered by Scraper Agent', color: '#8A898C', icon: '⟳' },
     ai_analyzed:      { label: 'AI analyzed',        color: '#4a5296', icon: '✦' },
+    claimed:          { label: 'Claimed',            color: '#4a5296', icon: '◉' },
+    unclaimed:        { label: 'Released',           color: '#8A898C', icon: '○' },
+    reassigned:       { label: 'Claim taken over',   color: '#4a5296', icon: '⇄' },
 }
 
 function formatRelativeTime(isoString) {
@@ -178,7 +182,7 @@ function HistoryPanel({ grantId }) {
                     const isLast    = i === logs.length - 1
                     // Only show diff for edit-type actions that have meaningful old/new values
                     const showDiff  = log.old_value && log.new_value
-                        && !['starred','unstarred','applied','unapplied','discarded','restored','scraped','ai_analyzed'].includes(log.action)
+                        && !['starred','unstarred','applied','unapplied','discarded','restored','scraped','ai_analyzed','claimed','unclaimed','reassigned'].includes(log.action)
 
                     return (
                         <li key={log.id} className="relative flex gap-3 pb-5">
@@ -258,6 +262,9 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
     const [discardOther,  setDiscardOther]  = useState('')
     const [discarding,    setDiscarding]    = useState(false)
     const discardRef = useRef(null)
+    const [claiming,     setClaiming]     = useState(false)
+    const [claimErr,     setClaimErr]     = useState(null)
+    const [takeOverOpen, setTakeOverOpen] = useState(false)
 
     useEffect(() => {
         if (!discardOpen) return
@@ -280,6 +287,10 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
     const isIgnored = !!grant.ignore
     const isStarred = !!grant.starred
     const score     = grant.relevance_score ?? 0
+    const claimedBy = grant.claimed_by ?? null
+    const myUserId  = auth?.user?.id
+    const isMine    = claimedBy && claimedBy.id === myUserId
+    const isClaimedByOther = claimedBy && !isMine
 
     const patch = useCallback(async (changes) => {
         setPatching(true); setPatchErr(null)
@@ -291,6 +302,20 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
             setPatchErr(e.message)
         } finally {
             setPatching(false)
+        }
+    }, [grant, onUpdate])
+
+    const doClaim = useCallback(async (action) => {
+        setClaiming(true); setClaimErr(null)
+        try {
+            const updated = await claimGrant(grant.id, action)
+            setGrant(g => ({ ...g, ...updated }))
+            onUpdate?.({ ...grant, ...updated })
+            setTakeOverOpen(false)
+        } catch (e) {
+            setClaimErr(e.response?.data?.message ?? e.message ?? 'Something went wrong.')
+        } finally {
+            setClaiming(false)
         }
     }, [grant, onUpdate])
 
@@ -369,9 +394,73 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
         </div>
     )
 
+    const claimBlock = (
+        <div className="flex flex-col gap-0">
+            {claimErr && (
+                <div className="mb-2 flex items-center gap-2 bg-[#d93050]/10 border border-[#d93050]/20 rounded-lg px-3 py-2 text-[#d93050] text-[11px] font-mono">
+                    <AlertCircle size={12} /> {claimErr}
+                </div>
+            )}
+
+            {!claimedBy && (
+                <button disabled={claiming} onClick={() => doClaim('claim')}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#C2E8DB] bg-white text-[#006825] hover:border-[#4a5296]/40 hover:text-[#4a5296] disabled:opacity-50 transition-all">
+                    <UserCheck size={15} className="shrink-0" />
+                    <div className="flex flex-col gap-0.5 text-left">
+                        <span className="text-[13px] font-medium leading-none">{claiming ? 'Claiming…' : 'Work on this'}</span>
+                        <span className="font-mono text-[10px] opacity-60">Mark yourself as the owner</span>
+                    </div>
+                </button>
+            )}
+
+            {isMine && (
+                <button disabled={claiming} onClick={() => doClaim('release')}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#D4D9FF] bg-[#D4D9FF]/20 text-[#4a5296] hover:bg-[#D4D9FF]/35 disabled:opacity-50 transition-all">
+                    <UserCheck size={15} className="shrink-0" />
+                    <div className="flex flex-col gap-0.5 text-left min-w-0">
+                        <span className="text-[13px] font-medium leading-none">Claimed by you</span>
+                        <span className="font-mono text-[10px] opacity-60 leading-snug truncate">{claiming ? 'Releasing…' : 'Click to release'}</span>
+                    </div>
+                    <UserMinus size={12} className="ml-auto shrink-0 opacity-60" />
+                </button>
+            )}
+
+            {isClaimedByOther && (
+                <div className="flex flex-col gap-0">
+                    <button disabled={claiming} onClick={() => setTakeOverOpen(o => !o)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all disabled:opacity-50
+                            ${takeOverOpen ? 'border-[#FF7900]/40 bg-[#FF7900]/08 text-[#FF7900]' : 'border-[#D4D9FF] bg-[#D4D9FF]/20 text-[#4a5296] hover:border-[#FF7900]/30'}`}>
+                        <UserCheck size={15} className="shrink-0" />
+                        <div className="flex flex-col gap-0.5 text-left min-w-0">
+                            <span className="text-[13px] font-medium leading-none">Claimed by {claimedBy.name}</span>
+                            <span className="font-mono text-[10px] opacity-60">Click to take over</span>
+                        </div>
+                        <UserCog size={12} className="ml-auto shrink-0 opacity-60" />
+                    </button>
+                    {takeOverOpen && (
+                        <div className="mt-1 rounded-xl border border-[#FF7900]/25 bg-[#FF7900]/04 p-3 flex flex-col gap-2.5">
+                            <p className="text-[12px] text-[#233B22] leading-relaxed">
+                                Take this over from <strong>{claimedBy.name}</strong>? They'll lose ownership and this will be logged.
+                            </p>
+                            <div className="flex gap-2 pt-1">
+                                <button onClick={() => setTakeOverOpen(false)}
+                                    className="flex-1 px-3 py-1.5 rounded-lg border border-[#C2E8DB] text-[#8A898C] text-[12px] font-mono hover:border-[#006825]/30">Cancel</button>
+                                <button disabled={claiming} onClick={() => doClaim('take_over')}
+                                    className="flex-1 px-3 py-1.5 rounded-lg bg-[#FF7900] text-white text-[12px] font-mono font-medium hover:bg-[#e06c00] disabled:opacity-40 disabled:cursor-not-allowed">
+                                    {claiming ? 'Saving…' : 'Take over'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+
     const actionsPanel = (
         <div className="flex flex-col gap-3">
             {patchErr && <div className="flex items-center gap-2 bg-[#d93050]/10 border border-[#d93050]/20 rounded-lg px-3 py-2 text-[#d93050] text-[11px] font-mono"><AlertCircle size={12} /> {patchErr}</div>}
+            {claimBlock}
             <ActionButton active={isStarred} disabled={patching} onClick={() => patch({ starred: !isStarred })}
                 icon={<Star size={15} strokeWidth={isStarred ? 0 : 1.8} fill={isStarred ? 'currentColor' : 'none'} />}
                 label={isStarred ? 'Starred' : 'Star this grant'} hint={isStarred ? 'Click to remove' : 'Bookmark for quick retrieval'}
@@ -411,6 +500,7 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
                             { value: 'not_a_grant',       label: 'Not a grant opportunity' },
                             { value: 'deadline_passed',   label: 'Deadline already passed' },
                             { value: 'not_cash',          label: 'Not a cash grant' },
+                            { value: 'outside_scope',     label: 'Not our focus' },
                             { value: 'outside_geography', label: 'Outside our geography' },
                             { value: 'paywall',           label: 'Requires account / paywall' },
                             { value: 'other',             label: 'Other…' },

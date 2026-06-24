@@ -11,6 +11,7 @@ class Grant extends Model
         'source', 'search_query', 'offers_cash', 'amount', 'deadline',
         'eligibility', 'summary', 'ai_analyzed', 'area_relevant',
         'relevance_score', 'starred', 'notes', 'discard_reason', 'scraped_at',
+        'claimed_by_user_id', 'claimed_at',
     ];
 
     protected $casts = [
@@ -22,5 +23,11 @@ class Grant extends Model
         'starred'         => 'boolean',
         'relevance_score' => 'integer',
         'scraped_at'      => 'datetime',
+        'claimed_at'      => 'datetime',
     ];
+
+    public function claimedBy()
+    {
+        return $this->belongsTo(User::class, 'claimed_by_user_id');
+    }
 }

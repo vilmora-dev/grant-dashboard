@@ -5,6 +5,7 @@ namespace App\Models;
 use Database\Factories\GrantUnifiedFactory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class GrantUnified extends Model
@@ -20,6 +21,7 @@ class GrantUnified extends Model
         'eligibility', 'search_query',
         'scrape_method', 'source',
         'applied', 'ignore', 'starred', 'notes', 'discard_reason',
+        'claimed_by_user_id', 'claimed_at',
         'offers_cash', 'area_relevant', 'ai_analyzed', 'page_crawled',
         'relevance_score',
         'opportunity_id', 'opportunity_number', 'agency_code', 'agency_name',
@@ -42,6 +44,7 @@ class GrantUnified extends Model
         'page_crawled'    => 'boolean',
         'relevance_score' => 'integer',
         'scraped_at'      => 'datetime',
+        'claimed_at'      => 'datetime',
     ];
 
     // -- Relationships --------------------------------------------------------
@@ -50,5 +53,10 @@ class GrantUnified extends Model
     {
         return $this->hasMany(GrantActionLog::class, 'grant_id')
                     ->orderByDesc('created_at');
+    }
+
+    public function claimedBy(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'claimed_by_user_id');
     }
 }
