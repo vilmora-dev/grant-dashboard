@@ -34,6 +34,9 @@ export function useGrantFilters() {
         if (!params.search)                         delete params.search
         if (!params.min_score || params.min_score === 0) delete params.min_score
         if (!params.deadline_window || params.deadline_window === 'any') delete params.deadline_window
+        if (!params.claim || params.claim === 'any') delete params.claim
+        // exclude_mine only means anything alongside claim=claimed
+        if (!params.exclude_mine || params.claim !== 'claimed') delete params.exclude_mine
 
         router.get('/dashboard', params, {
             preserveState:  true,
@@ -57,6 +60,13 @@ export function useGrantFilters() {
     function setPage(p)            { navigate({ page: p }, false) }
     function setDeadlineWindow(v)  { navigate({ deadline_window: v }) }
 
+    // Switching claim filter away from 'claimed' clears exclude_mine too,
+    // since the toggle only makes sense in that context.
+    function setClaimFilter(v) {
+        navigate(v === 'claimed' ? { claim: v } : { claim: v, exclude_mine: false })
+    }
+    function setExcludeMine(v)     { navigate({ exclude_mine: v }) }
+
     // Debounced - slider fires on every pixel of drag; only hit server on release
     function setMinScore(v) {
         clearTimeout(minScoreTimer.current)
@@ -72,6 +82,8 @@ export function useGrantFilters() {
             starred:         false,
             min_score:       0,
             deadline_window: 'any',
+            claim:           'any',
+            exclude_mine:    false,
             page:            1,
         }, false)
     }
@@ -85,6 +97,8 @@ export function useGrantFilters() {
         starredOnly:     filters.starred         ?? false,
         minScore:        filters.min_score       ?? 0,
         deadlineWindow:  filters.deadline_window ?? 'any',
+        claimFilter:     filters.claim           ?? 'any',
+        excludeMine:     filters.exclude_mine    ?? false,
     }
 
     return {
@@ -97,6 +111,8 @@ export function useGrantFilters() {
         setPage,
         setMinScore,
         setDeadlineWindow,
+        setClaimFilter,
+        setExcludeMine,
         resetFilters,
     }
 }

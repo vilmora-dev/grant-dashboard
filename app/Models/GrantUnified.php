@@ -20,7 +20,7 @@ class GrantUnified extends Model
         'title', 'url', 'description', 'summary', 'amount', 'deadline',
         'eligibility', 'search_query',
         'scrape_method', 'source',
-        'applied', 'ignore', 'starred', 'notes', 'discard_reason',
+        'applied', 'ignore', 'reviewed', 'starred', 'notes', 'discard_reason',
         'claimed_by_user_id', 'claimed_at',
         'offers_cash', 'area_relevant', 'ai_analyzed', 'page_crawled',
         'relevance_score',
@@ -37,6 +37,7 @@ class GrantUnified extends Model
     protected $casts = [
         'applied'         => 'boolean',
         'ignore'          => 'boolean',
+        'reviewed'        => 'boolean',
         'starred'         => 'boolean',
         'offers_cash'     => 'boolean',
         'area_relevant'   => 'boolean',

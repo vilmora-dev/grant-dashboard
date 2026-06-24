@@ -42,6 +42,7 @@ class GrantDataController extends Controller
         $data = $request->validate([
             'applied'        => 'sometimes|boolean',
             'ignore'         => 'sometimes|boolean',
+            'reviewed'       => 'sometimes|boolean',
             'starred'        => 'sometimes|boolean',
             'offers_cash'    => 'sometimes|boolean',
             'area_relevant'  => 'sometimes|boolean',

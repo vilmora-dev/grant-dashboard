@@ -15,13 +15,15 @@ class GrantController extends Controller
      *
      * Query params:
      *   page             int     default 1
-     *   status           string  relevant|applied|ignored   default relevant
+     *   status           string  relevant|applied|ignored|reviewed   default relevant
      *   source           string  all|grants_gov|web|…       default all
      *   sort             string  match|newest|deadline|amount|title|source  default match
      *   search           string  full-text on title+description+eligibility+agency_name
      *   starred          bool    1 = only starred
      *   min_score        int     0–100, default 0 (no filter)
      *   deadline_window  string  any|week|month|expired  default any
+     *   claim            string  any|mine|available|claimed  default any
+     *   exclude_mine     bool    1 = when claim=claimed, exclude grants claimed by me
      */
     public function index(Request $request)
     {
@@ -30,9 +32,10 @@ class GrantController extends Controller
         // ── Status ───────────────────────────────────────────────────────
         $status = $request->query('status', 'relevant');
         match ($status) {
-            'applied' => $q->where('applied', true),
-            'ignored' => $q->where('ignore', true),
-            default   => $q->where('ignore', false)->where('applied', false),
+            'applied'  => $q->where('applied', true),
+            'ignored'  => $q->where('ignore', true),
+            'reviewed' => $q->where('reviewed', true),
+            default    => $q->where('ignore', false)->where('applied', false),
         };
 
         // ── Source / scrape_method filter ─────────────────────────────────
@@ -49,6 +52,21 @@ class GrantController extends Controller
         if (filter_var($request->query('starred'), FILTER_VALIDATE_BOOLEAN)) {
             $q->where('starred', true);
         }
+
+        // ── Claim status ─────────────────────────────────────────────────
+        // any (default) | mine | available | claimed
+        // exclude_mine only has an effect when claim=claimed: it removes
+        // grants claimed by the current user from that "claimed" list.
+        $userId      = $request->user()?->id;
+        $claim       = $request->query('claim', 'any');
+        $excludeMine = filter_var($request->query('exclude_mine'), FILTER_VALIDATE_BOOLEAN);
+        match ($claim) {
+            'mine'      => $q->where('claimed_by_user_id', $userId),
+            'available' => $q->whereNull('claimed_by_user_id'),
+            'claimed'   => $q->whereNotNull('claimed_by_user_id')
+                              ->when($excludeMine && $userId, fn ($sub) => $sub->where('claimed_by_user_id', '!=', $userId)),
+            default     => null,
+        };
 
         // ── Min relevance score ───────────────────────────────────────────
         $minScore = max(0, min(100, (int) $request->query('min_score', 0)));
@@ -126,6 +144,10 @@ class GrantController extends Controller
         $relevantCnt  = GrantUnified::where('ignore', false)->where('applied', false)->count();
         $appliedCnt   = GrantUnified::where('applied', true)->count();
         $ignoredCnt   = GrantUnified::where('ignore', true)->count();
+        $reviewedCnt  = GrantUnified::where('reviewed', true)->count();
+        $mineCnt      = $userId ? GrantUnified::where('claimed_by_user_id', $userId)->count() : 0;
+        $availableCnt = GrantUnified::whereNull('claimed_by_user_id')->count();
+        $claimedCnt   = GrantUnified::whereNotNull('claimed_by_user_id')->count();
 
         // ── Distinct sources actually in DB (for the source dropdown) ─────
         $presentSources = GrantUnified::select('source')
@@ -156,10 +178,14 @@ class GrantController extends Controller
                 'to'           => $paginated->lastItem()  ?? 0,
             ],
             'counts' => [
-                'total'    => $totalInDb,
-                'relevant' => $relevantCnt,
-                'applied'  => $appliedCnt,
-                'ignored'  => $ignoredCnt,
+                'total'     => $totalInDb,
+                'relevant'  => $relevantCnt,
+                'applied'   => $appliedCnt,
+                'ignored'   => $ignoredCnt,
+                'reviewed'  => $reviewedCnt,
+                'mine'      => $mineCnt,
+                'available' => $availableCnt,
+                'claimed'   => $claimedCnt,
             ],
             'presentSources' => $presentSources,
             'filters' => [
@@ -170,6 +196,8 @@ class GrantController extends Controller
                 'starred'        => filter_var($request->query('starred'), FILTER_VALIDATE_BOOLEAN),
                 'min_score'      => $minScore,
                 'deadline_window' => $deadlineWindow,
+                'claim'          => $claim,
+                'exclude_mine'   => $excludeMine,
             ],
         ]);
     }

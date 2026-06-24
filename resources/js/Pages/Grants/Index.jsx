@@ -4,6 +4,7 @@ import { Inbox } from 'lucide-react'
 import AppLayout from '../../Layouts/AppLayout'
 import GrantCard from '../../Components/GrantCard'
 import Controls from '../../Components/Controls'
+import FilterSidebar from '../../Components/FilterSidebar'
 import GrantModal from '../../Components/GrantModal'
 import Pagination from '../../Components/Pagination'
 import { useGrantFilters } from '../../hooks/useGrantFilters'
@@ -24,12 +25,18 @@ export default function GrantsIndex() {
     const {
         filters, setSearch,
         setStatusFilter, setSourceFilter, setSortBy,
-        setStarredOnly, setPage, setMinScore, setDeadlineWindow, resetFilters,
+        setStarredOnly, setPage, setMinScore, setDeadlineWindow,
+        setClaimFilter, setExcludeMine, resetFilters,
     } = useGrantFilters()
 
     const [selected,       setSelected]       = useState(null)
     const [lastSelectedId, setLastSelectedId] = useState(null)
     const [viewMode,       setViewMode]       = useState('grid')
+
+    // Sidebar UI state — desktop collapse + mobile drawer, independent of
+    // the filters themselves (purely a layout concern).
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(false)
+    const [mobileFiltersOpen, setMobileFiltersOpen] = useState(false)
 
     // Optimistic update: when a grant is patched in the modal, update
     // the local copy so the card reflects the change without a reload.
@@ -78,76 +85,120 @@ export default function GrantsIndex() {
             )}
 
             <AppLayout stats={navStats} committedSearch={filters.search} onSearch={setSearch}>
-                <Controls
-                    presentSources={new Set(presentSources)}
-                    filters={filters}
-                    statusCounts={{
-                        relevant: counts.relevant,
-                        applied:  counts.applied,
-                        ignored:  counts.ignored,
-                    }}
-                    onStatusFilter={setStatusFilter}
-                    onSourceFilter={setSourceFilter}
-                    onSort={setSortBy}
-                    onStarredFilter={setStarredOnly}
-                    onMinScore={setMinScore}
-                    onDeadlineWindow={setDeadlineWindow}
-                    onReset={resetFilters}
-                    viewMode={viewMode}
-                    onViewModeChange={setViewMode}
-                />
-
-                {localGrants.length === 0 ? (
-                    <EmptyState
-                        hasFilters={
-                            filters.search ||
-                            filters.cashFilter   !== 'all' ||
-                            filters.sourceFilter !== 'all' ||
-                            filters.statusFilter !== 'relevant' ||
-                            filters.ai_analyzed  ||
-                            filters.starredOnly
-                        }
+                <div className="flex gap-5 items-start">
+                    <FilterSidebar
+                        open={mobileFiltersOpen}
+                        onClose={() => setMobileFiltersOpen(false)}
+                        collapsed={sidebarCollapsed}
+                        onToggleCollapse={() => setSidebarCollapsed(c => !c)}
+                        presentSources={new Set(presentSources)}
+                        filters={filters}
+                        statusCounts={{
+                            relevant: counts.relevant,
+                            applied:  counts.applied,
+                            ignored:  counts.ignored,
+                            reviewed: counts.reviewed,
+                        }}
+                        claimCounts={{
+                            mine:      counts.mine,
+                            available: counts.available,
+                            claimed:   counts.claimed,
+                        }}
+                        onStatusFilter={setStatusFilter}
+                        onSourceFilter={setSourceFilter}
+                        onSort={setSortBy}
+                        onStarredFilter={setStarredOnly}
+                        onMinScore={setMinScore}
+                        onDeadlineWindow={setDeadlineWindow}
+                        onClaimFilter={setClaimFilter}
+                        onExcludeMine={setExcludeMine}
                         onReset={resetFilters}
                     />
-                ) : viewMode === 'grid' ? (
-                    <>
-                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-                            {localGrants.map((grant) => (
-                                <GrantCard
-                                    key={grant._id}
-                                    grant={grant}
-                                    onSelect={() => handleSelect(grant)}
-                                    isLastSelected={grant._id === lastSelectedId}
-                                    onUpdate={handleUpdate}
+
+                    {/* FilterSidebar is position:fixed (so it never scrolls with
+                        the page), which pulls it out of this flex row entirely.
+                        This spacer reserves the same width so the grants column
+                        doesn't slide under it — and takes zero space itself
+                        when the sidebar is collapsed. */}
+                    {!sidebarCollapsed && (
+                        <div className="hidden md:block shrink-0 w-[260px]" aria-hidden="true" />
+                    )}
+
+                    <div className="flex-1 min-w-0">
+                        <Controls
+                            filters={filters}
+                            onStatusFilter={setStatusFilter}
+                            onSourceFilter={setSourceFilter}
+                            onSort={setSortBy}
+                            onStarredFilter={setStarredOnly}
+                            onMinScore={setMinScore}
+                            onDeadlineWindow={setDeadlineWindow}
+                            onClaimFilter={setClaimFilter}
+                            onExcludeMine={setExcludeMine}
+                            onSearch={setSearch}
+                            onReset={resetFilters}
+                            viewMode={viewMode}
+                            onViewModeChange={setViewMode}
+                            onOpenMobileFilters={() => setMobileFiltersOpen(true)}
+                            sidebarCollapsed={sidebarCollapsed}
+                            onOpenSidebar={() => setSidebarCollapsed(false)}
+                        />
+
+                        {localGrants.length === 0 ? (
+                            <EmptyState
+                                hasFilters={
+                                    filters.search ||
+                                    filters.sourceFilter !== 'all' ||
+                                    filters.statusFilter !== 'relevant' ||
+                                    filters.starredOnly ||
+                                    filters.minScore > 0 ||
+                                    filters.deadlineWindow !== 'any' ||
+                                    filters.claimFilter !== 'any' ||
+                                    filters.excludeMine
+                                }
+                                onReset={resetFilters}
+                            />
+                        ) : viewMode === 'grid' ? (
+                            <>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                                    {localGrants.map((grant) => (
+                                        <GrantCard
+                                            key={grant._id}
+                                            grant={grant}
+                                            onSelect={() => handleSelect(grant)}
+                                            isLastSelected={grant._id === lastSelectedId}
+                                            onUpdate={handleUpdate}
+                                        />
+                                    ))}
+                                </div>
+                                <Pagination
+                                    page={meta.current_page}
+                                    totalPages={meta.last_page}
+                                    totalItems={meta.total}
+                                    from={meta.from}
+                                    to={meta.to}
+                                    setPage={setPage}
                                 />
-                            ))}
-                        </div>
-                        <Pagination
-                            page={meta.current_page}
-                            totalPages={meta.last_page}
-                            totalItems={meta.total}
-                            from={meta.from}
-                            to={meta.to}
-                            setPage={setPage}
-                        />
-                    </>
-                ) : (
-                    <>
-                        <GrantsTable
-                            grants={localGrants}
-                            onSelect={handleSelect}
-                            lastSelectedId={lastSelectedId}
-                        />
-                        <Pagination
-                            page={meta.current_page}
-                            totalPages={meta.last_page}
-                            totalItems={meta.total}
-                            from={meta.from}
-                            to={meta.to}
-                            setPage={setPage}
-                        />
-                    </>
-                )}
+                            </>
+                        ) : (
+                            <>
+                                <GrantsTable
+                                    grants={localGrants}
+                                    onSelect={handleSelect}
+                                    lastSelectedId={lastSelectedId}
+                                />
+                                <Pagination
+                                    page={meta.current_page}
+                                    totalPages={meta.last_page}
+                                    totalItems={meta.total}
+                                    from={meta.from}
+                                    to={meta.to}
+                                    setPage={setPage}
+                                />
+                            </>
+                        )}
+                    </div>
+                </div>
 
                 {selected && (
                     <GrantModal
