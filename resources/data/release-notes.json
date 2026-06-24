@@ -4,13 +4,9 @@
         "date": "2026-06-24",
         "items": [
             "Grants list now refreshes automatically every 20 seconds, so changes made by coworkers (claims, status moves, newly scraped grants) show up without a manual page reload. Pauses while a grant card is open or the tab is in the background.",
-            "Sped up the dashboard's status/claim counts by combining several separate database queries into two, and added database indexes on grant status fields — most noticeable on larger grant lists."
-        ]
-    },
-    {
-        "version": "2026.06.23",
-        "date": "2026-06-23",
-        "items": [
+            "Sped up the dashboard's status/claim counts by combining several separate database queries into two, and added database indexes on grant status fields — most noticeable on larger grant lists.",
+            "Fixed a bug where deleting your account would fail with a generic error page if you had ever claimed a grant or taken any other tracked action. Account deletion now works correctly in that case, and shows a clear message instead of a broken page if it ever can't complete.",
+            "Grant history now shows the name of a team member who has since deleted their account (e.g. \"Jane Doe (deleted)\") instead of attributing their past actions to \"System\".",
             "Team members can now claim a grant to signal they're working on it, release it, or take over a grant claimed by someone else. Claimed grants show a badge on their card, and claim status (mine / available / claimed) is now filterable from the dashboard.",
             "Added a Reviewed stage to the grant status ladder (New → Reviewed → Applied), plus a matching filter, count, and actions in the grant detail view.",
             "Added an \"All\" option and a new filter sidebar with live counts for status, claim, source, deadline window, and minimum match score — replacing the old filter bar. The sidebar can be collapsed for more room and works as a slide-out drawer on mobile.",
