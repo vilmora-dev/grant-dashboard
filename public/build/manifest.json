@@ -1,6 +1,6 @@
 {
-  "_AppLayout-58nxEZ0B.js": {
-    "file": "assets/AppLayout-58nxEZ0B.js",
+  "_AppLayout-BjrXL08L.js": {
+    "file": "assets/AppLayout-BjrXL08L.js",
     "name": "AppLayout",
     "imports": [
       "_vendor-react-DhM08nUf.js",
@@ -106,7 +106,7 @@
     ]
   },
   "resources/css/app.css": {
-    "file": "assets/app-HGWwOtMw.css",
+    "file": "assets/app-DULgDdI0.css",
     "src": "resources/css/app.css",
     "isEntry": true
   },
@@ -204,14 +204,14 @@
     ]
   },
   "resources/js/Pages/Config/Index.jsx": {
-    "file": "assets/Index-oU-rgBnd.js",
+    "file": "assets/Index-DXqN1Yue.js",
     "name": "Index",
     "src": "resources/js/Pages/Config/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DhM08nUf.js",
       "_vendor-inertia-DQzYFSup.js",
-      "_AppLayout-58nxEZ0B.js",
+      "_AppLayout-BjrXL08L.js",
       "_refresh-cw-BanBySbi.js",
       "_createLucideIcon-CYDGQ8Ce.js",
       "_x-CdU175E-.js",
@@ -240,14 +240,14 @@
     ]
   },
   "resources/js/Pages/Grants/Index.jsx": {
-    "file": "assets/Index-3cyhABHs.js",
+    "file": "assets/Index-BGZWMa1H.js",
     "name": "Index",
     "src": "resources/js/Pages/Grants/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DhM08nUf.js",
       "_vendor-inertia-DQzYFSup.js",
-      "_AppLayout-58nxEZ0B.js",
+      "_AppLayout-BjrXL08L.js",
       "_createLucideIcon-CYDGQ8Ce.js",
       "_eye-off-CNtzgEh4.js",
       "_refresh-cw-BanBySbi.js",
@@ -256,14 +256,14 @@
     ]
   },
   "resources/js/Pages/Profile/Edit.jsx": {
-    "file": "assets/Edit-q4k8btJF.js",
+    "file": "assets/Edit-Ct6IbHbT.js",
     "name": "Edit",
     "src": "resources/js/Pages/Profile/Edit.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DhM08nUf.js",
       "_vendor-inertia-DQzYFSup.js",
-      "_AppLayout-58nxEZ0B.js",
+      "_AppLayout-BjrXL08L.js",
       "resources/js/Pages/Profile/Partials/DeleteUserForm.jsx",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.jsx",
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.jsx",
@@ -306,14 +306,27 @@
       "_transition-2X9OWlpo.js"
     ]
   },
+  "resources/js/Pages/ReleaseNotes/Index.jsx": {
+    "file": "assets/Index-CyVLMb38.js",
+    "name": "Index",
+    "src": "resources/js/Pages/ReleaseNotes/Index.jsx",
+    "isDynamicEntry": true,
+    "imports": [
+      "_vendor-react-DhM08nUf.js",
+      "_AppLayout-BjrXL08L.js",
+      "_vendor-inertia-DQzYFSup.js",
+      "_x-CdU175E-.js",
+      "_createLucideIcon-CYDGQ8Ce.js"
+    ]
+  },
   "resources/js/Pages/Stats/Index.jsx": {
-    "file": "assets/Index-TfcZYiX9.js",
+    "file": "assets/Index-BrgDcpvQ.js",
     "name": "Index",
     "src": "resources/js/Pages/Stats/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DhM08nUf.js",
-      "_AppLayout-58nxEZ0B.js",
+      "_AppLayout-BjrXL08L.js",
       "_refresh-cw-BanBySbi.js",
       "_createLucideIcon-CYDGQ8Ce.js",
       "_vendor-recharts-RIS6Pk78.js",
@@ -322,14 +335,14 @@
     ]
   },
   "resources/js/Pages/Team/Index.jsx": {
-    "file": "assets/Index-2b2tUsmU.js",
+    "file": "assets/Index-DqAwX8fA.js",
     "name": "Index",
     "src": "resources/js/Pages/Team/Index.jsx",
     "isDynamicEntry": true,
     "imports": [
       "_vendor-react-DhM08nUf.js",
       "_vendor-inertia-DQzYFSup.js",
-      "_AppLayout-58nxEZ0B.js",
+      "_AppLayout-BjrXL08L.js",
       "_createLucideIcon-CYDGQ8Ce.js",
       "_x-CdU175E-.js",
       "_copy-CEMBKrOJ.js"
@@ -346,7 +359,7 @@
     ]
   },
   "resources/js/app.jsx": {
-    "file": "assets/app-CLNgmAwG.js",
+    "file": "assets/app-BTNSLTk9.js",
     "name": "app",
     "src": "resources/js/app.jsx",
     "isEntry": true,
@@ -370,12 +383,13 @@
       "resources/js/Pages/Profile/Partials/DeleteUserForm.jsx",
       "resources/js/Pages/Profile/Partials/UpdatePasswordForm.jsx",
       "resources/js/Pages/Profile/Partials/UpdateProfileInformationForm.jsx",
+      "resources/js/Pages/ReleaseNotes/Index.jsx",
       "resources/js/Pages/Stats/Index.jsx",
       "resources/js/Pages/Team/Index.jsx",
       "resources/js/Pages/Welcome.jsx"
     ],
     "css": [
-      "assets/app-HGWwOtMw.css"
+      "assets/app-DULgDdI0.css"
     ]
   }
 }
