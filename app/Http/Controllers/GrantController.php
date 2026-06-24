@@ -143,15 +143,37 @@ class GrantController extends Controller
             default    => $q->orderByDesc('relevance_score')->orderByDesc('scraped_at'),
         };
 
-        // ── Counts (always over full table, not filtered) ─────────────────
-        $totalInDb    = GrantUnified::count();
-        $relevantCnt  = GrantUnified::where('ignore', false)->where('applied', false)->where('reviewed', false)->count();
-        $appliedCnt   = GrantUnified::where('applied', true)->count();
-        $ignoredCnt   = GrantUnified::where('ignore', true)->count();
-        $reviewedCnt  = GrantUnified::where('reviewed', true)->count();
-        $mineCnt      = $userId ? GrantUnified::where('claimed_by_user_id', $userId)->count() : 0;
-        $availableCnt = GrantUnified::whereNull('claimed_by_user_id')->count();
-        $claimedCnt   = GrantUnified::whereNotNull('claimed_by_user_id')->count();
+        // Counts (always over full table, not filtered)
+        // Collapsed into two conditional-aggregation queries instead of one
+        // COUNT(*) per bucket - this endpoint is now polled every 20s per
+        // open tab (see the auto-refresh effect in Grants/Index.jsx), so the
+        // per-request query count matters more than it used to.
+        $statusCounts = GrantUnified::selectRaw("
+            COUNT(*) as total,
+            SUM(`ignore` = 0 AND applied = 0 AND reviewed = 0) as relevant,
+            SUM(applied = 1) as applied,
+            SUM(`ignore` = 1) as `ignored`,
+            SUM(reviewed = 1) as reviewed
+        ")->first();
+
+        $totalInDb   = (int) $statusCounts->total;
+        $relevantCnt = (int) $statusCounts->relevant;
+        $appliedCnt  = (int) $statusCounts->applied;
+        $ignoredCnt  = (int) $statusCounts->ignored;
+        $reviewedCnt = (int) $statusCounts->reviewed;
+
+        // Bind a sentinel (-1) when logged out so the query shape never
+        // changes - claimed_by_user_id is never -1, so "mine" just comes
+        // back 0 for guests instead of needing a second query branch.
+        $claimCounts = GrantUnified::selectRaw('
+            SUM(claimed_by_user_id IS NOT NULL) as claimed,
+            SUM(claimed_by_user_id IS NULL) as available,
+            SUM(claimed_by_user_id = ?) as mine
+        ', [$userId ?? -1])->first();
+
+        $claimedCnt   = (int) $claimCounts->claimed;
+        $availableCnt = (int) $claimCounts->available;
+        $mineCnt      = (int) $claimCounts->mine;
 
         // ── Distinct sources actually in DB (for the source dropdown) ─────
         $presentSources = GrantUnified::select('source')

@@ -63,6 +63,23 @@ export default function GrantsIndex() {
         return () => { off1(); off2() }
     }, [])
 
+    // Background auto-refresh — lets coworkers' changes show up without a manual reload.
+    
+    // Two guards keep it from being disruptive:
+    //   - skipped while the tab isn't visible (no point polling in the background)
+    //   - skipped while a grant modal is open, since GrantModal seeds its own
+    //     state from the grant prop once and doesn't re-sync - refreshing
+    //     localGrants underneath an open modal wouldn't update what the user
+    //     is looking at anyway, so there's no reason to pay for the request.
+    useEffect(() => {
+        const id = setInterval(() => {
+            if (document.visibilityState !== 'visible') return
+            if (selected) return
+            router.reload({ only: ['grants', 'meta'] })
+        }, 20_000)
+        return () => clearInterval(id)
+    }, [selected])
+
     // Stats for the AppLayout navbar pills
     const navStats = {
         total:   counts.total,
