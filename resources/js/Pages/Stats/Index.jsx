@@ -111,11 +111,10 @@ export default function StatsIndex() {
     // PNG export via html2canvas shim — just print the section
     const handleExport = () => {
         if (printableRef.current) {
-            printableRef.current.id = 'printable-content';  // Activate print ID
+            printableRef.current.id = 'printable-content';
             window.print();
-            // Cleanup after print (use afterprint event)
             setTimeout(() => {
-                if (printableRef.current) {  // Safe check
+                if (printableRef.current) {
                     printableRef.current.id = '';
                 }
             }, 1000);

@@ -7,17 +7,11 @@ use Illuminate\Support\Facades\Schema;
 return new class extends Migration
 {
     /**
-     * Follow-up to 2026_06_24_000003 (grant_action_logs.user_id -> nullOnDelete()).
-     *
-     * Once a deleted user's logs have user_id = null, GrantDataController::logs()
-     * can no longer tell their actions apart from real system/scraper/AI rows —
-     * both fall back to the same generic label ("System"), which is misleading
-     * in an audit trail (a real person's claim/review/discard history would read
-     * as if the system did it).
-     *
-     * Fix: snapshot the user's name onto their own log rows right before the
-     * account is deleted (see ProfileController::destroy()), so history can
-     * still say "Jane Doe (deleted)" instead of collapsing into "System".
+     * Once a deleted user's logs have user_id = null (see 2026_06_24_000003), they
+     * are otherwise indistinguishable from real system/scraper/AI rows in the audit
+     * trail. This column snapshots the user's name onto their own log rows right
+     * before the account is deleted (see ProfileController::destroy()), so history
+     * can still say "Jane Doe (deleted)" instead of collapsing into "System".
      */
     public function up(): void
     {

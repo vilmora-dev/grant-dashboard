@@ -83,12 +83,8 @@ class ProfileTest extends TestCase
 
     public function test_user_with_claimed_grants_and_action_history_can_delete_their_account(): void
     {
-        // Regression test for a bug where grant_action_logs.user_id was wired
-        // with restrictOnDelete() instead of nullOnDelete(), even though the
-        // column is nullable specifically to support this case. Any user who
-        // had claimed a grant (which always writes an action_log row) could
-        // never delete their account — $user->delete() threw an uncaught
-        // QueryException (MySQL 1451), surfaced to the user as a generic 500.
+        // Regression test: grant_action_logs.user_id FK must be nullOnDelete,
+        // not restrictOnDelete, so users with claimed-grant history can be deleted.
         $user = User::factory()->create();
         $userName = $user->name;
         $grant = GrantUnified::factory()->create([
@@ -125,7 +121,7 @@ class ProfileTest extends TestCase
         $this->assertNull($grant->fresh()->claimed_by_user_id);
 
         // The audit log row survives too, now detached from the deleted user
-        // (nullOnDelete on grant_action_logs.user_id — the actual fix under test)
+        // (nullOnDelete on grant_action_logs.user_id)
         $this->assertNotNull($log->fresh());
         $this->assertNull($log->fresh()->user_id);
 
