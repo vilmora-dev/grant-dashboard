@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from 'react'
 import { Link, router, usePage } from '@inertiajs/react'
-import { Search, X, User, LayoutDashboard, Settings, LogOut, ChevronDown, BarChart2 } from 'lucide-react'
+import { Search, X, User, Users, LayoutDashboard, Settings, LogOut, ChevronDown, BarChart2, Sparkles } from 'lucide-react'
 
 /**
  * AppLayout — sticky header + page slot.
@@ -283,10 +283,19 @@ export default function AppLayout({
                                                     onClick={() => setAccountOpen(false)}
                                                     className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
                                                 >
-                                                    <User size={14} className="text-[#8A898C]" />
+                                                    <Users size={14} className="text-[#8A898C]" />
                                                     Team
                                                 </Link>
                                                 </>)}
+
+                                                <Link
+                                                    href="/release-notes"
+                                                    onClick={() => setAccountOpen(false)}
+                                                    className="flex items-center gap-2.5 px-3 py-2 text-[13px] font-sans text-[#233B22] hover:bg-[#C8EFE2] hover:text-[#006825] transition-colors"
+                                                >
+                                                    <Sparkles size={14} className="text-[#8A898C]" />
+                                                    Release Notes
+                                                </Link>
 
                                                 <Link
                                                     href={route('profile.edit')}

@@ -3,10 +3,11 @@ import {
     X, ExternalLink, Globe, DollarSign, Calendar, Users,
     Sparkles, AlertCircle, Pencil, Zap, History,
     CheckCheck, EyeOff, Star, Save, RotateCcw, Trash2, ChevronDown, StarOff, RefreshCw,
+    UserCheck, UserMinus, UserCog,
 } from 'lucide-react'
 import { usePage } from '@inertiajs/react'
 import { formatAmountFull, formatDeadline, urgencyClass } from '../utils/formatters'
-import { patchGrant, fetchGrantLogs } from '../utils/api'
+import { patchGrant, fetchGrantLogs, claimGrant } from '../utils/api'
 
 // HTML helpers
 
@@ -57,6 +58,8 @@ const ACTION_META = {
     unstarred:        { label: 'Unstarred',          color: '#8A898C', icon: '☆' },
     applied:          { label: 'Marked as Applied',  color: '#006825', icon: '✓' },
     unapplied:        { label: 'Unmarked Applied',   color: '#8A898C', icon: '✗' },
+    reviewed:         { label: 'Marked as Reviewed', color: '#072F98', icon: '◐' },
+    unreviewed:       { label: 'Unmarked Reviewed',  color: '#8A898C', icon: '✗' },
     discarded:        { label: 'Discarded',          color: '#F5601D', icon: '⊘' },
     restored:         { label: 'Restored',           color: '#006825', icon: '↺' },
     notes_updated:    { label: 'Notes updated',      color: '#072F98', icon: '✎' },
@@ -64,8 +67,11 @@ const ACTION_META = {
     deadline_edited:  { label: 'Deadline edited',    color: '#072F98', icon: '✎' },
     field_updated:    { label: 'Field updated',      color: '#072F98', icon: '✎' },
     updated:          { label: 'Updated',            color: '#072F98', icon: '✎' },
-    scraped:          { label: 'Scraped',            color: '#8A898C', icon: '⟳' },
+    scraped:          { label: 'Discovered by Scraper Agent', color: '#8A898C', icon: '⟳' },
     ai_analyzed:      { label: 'AI analyzed',        color: '#4a5296', icon: '✦' },
+    claimed:          { label: 'Claimed',            color: '#4a5296', icon: '◉' },
+    unclaimed:        { label: 'Released',           color: '#8A898C', icon: '○' },
+    reassigned:       { label: 'Claim taken over',   color: '#4a5296', icon: '⇄' },
 }
 
 function formatRelativeTime(isoString) {
@@ -178,7 +184,7 @@ function HistoryPanel({ grantId }) {
                     const isLast    = i === logs.length - 1
                     // Only show diff for edit-type actions that have meaningful old/new values
                     const showDiff  = log.old_value && log.new_value
-                        && !['starred','unstarred','applied','unapplied','discarded','restored','scraped','ai_analyzed'].includes(log.action)
+                        && !['starred','unstarred','applied','unapplied','reviewed','unreviewed','discarded','restored','scraped','ai_analyzed','claimed','unclaimed','reassigned'].includes(log.action)
 
                     return (
                         <li key={log.id} className="relative flex gap-3 pb-5">
@@ -258,6 +264,9 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
     const [discardOther,  setDiscardOther]  = useState('')
     const [discarding,    setDiscarding]    = useState(false)
     const discardRef = useRef(null)
+    const [claiming,     setClaiming]     = useState(false)
+    const [claimErr,     setClaimErr]     = useState(null)
+    const [takeOverOpen, setTakeOverOpen] = useState(false)
 
     useEffect(() => {
         if (!discardOpen) return
@@ -276,10 +285,15 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
     const deadline  = formatDeadline(grant.deadline)
     const u         = urgencyClass(deadline?.diff)
     const amount    = formatAmountFull(grant.amount)
-    const isApplied = !!grant.applied
-    const isIgnored = !!grant.ignore
-    const isStarred = !!grant.starred
+    const isApplied  = !!grant.applied
+    const isReviewed = !!grant.reviewed
+    const isIgnored  = !!grant.ignore
+    const isStarred  = !!grant.starred
     const score     = grant.relevance_score ?? 0
+    const claimedBy = grant.claimed_by ?? null
+    const myUserId  = auth?.user?.id
+    const isMine    = claimedBy && claimedBy.id === myUserId
+    const isClaimedByOther = claimedBy && !isMine
 
     const patch = useCallback(async (changes) => {
         setPatching(true); setPatchErr(null)
@@ -291,6 +305,27 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
             setPatchErr(e.message)
         } finally {
             setPatching(false)
+        }
+    }, [grant, onUpdate])
+
+    const setStatus = useCallback((next) => {
+        patch({
+            applied:  next === 'applied',
+            reviewed: next === 'reviewed',
+        })
+    }, [patch])
+
+    const doClaim = useCallback(async (action) => {
+        setClaiming(true); setClaimErr(null)
+        try {
+            const updated = await claimGrant(grant.id, action)
+            setGrant(g => ({ ...g, ...updated }))
+            onUpdate?.({ ...grant, ...updated })
+            setTakeOverOpen(false)
+        } catch (e) {
+            setClaimErr(e.response?.data?.message ?? e.message ?? 'Something went wrong.')
+        } finally {
+            setClaiming(false)
         }
     }, [grant, onUpdate])
 
@@ -313,6 +348,7 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
                     </span>
                 )}
                 {isApplied && <Tag color="green"><CheckCheck size={9} /> Applied</Tag>}
+                {!isApplied && isReviewed && <Tag color="accent"><CheckCheck size={9} /> Reviewed</Tag>}
                 {isIgnored && <Tag color="red"><EyeOff size={9} /> Ignored</Tag>}
                 {isStarred && <Tag color="gold"><Star size={9} /> Starred</Tag>}
             </div>
@@ -321,14 +357,14 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
 
             {grant.description && <RichText text={grant.description} className="text-[13.5px] text-[#5D5961] leading-relaxed" />}
 
-            {grant.summary && (
+            {/* {grant.summary && (
                 <div className="bg-[#D4D9FF]/30 border border-[#D4D9FF] rounded-xl p-4">
                     <div className="flex items-center gap-1.5 font-mono text-[10px] text-[#4a5296] uppercase tracking-widest mb-2">
                         <Sparkles size={10} /> Summary
                     </div>
                     <RichText text={grant.summary} className="text-[13px] text-[#5D5961] leading-relaxed" />
                 </div>
-            )}
+            )} */}
 
             <div className="bg-[#C8EFE2] border border-[#C2E8DB] rounded-xl p-4 flex flex-col gap-4">
                 {amount && (
@@ -369,17 +405,82 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
         </div>
     )
 
+    const claimBlock = (
+        <div className="flex flex-col gap-0">
+            {claimErr && (
+                <div className="mb-2 flex items-center gap-2 bg-[#d93050]/10 border border-[#d93050]/20 rounded-lg px-3 py-2 text-[#d93050] text-[11px] font-mono">
+                    <AlertCircle size={12} /> {claimErr}
+                </div>
+            )}
+
+            {!claimedBy && (
+                <button disabled={claiming} onClick={() => doClaim('claim')}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#C2E8DB] bg-white text-[#006825] hover:border-[#4a5296]/40 hover:text-[#4a5296] disabled:opacity-50 transition-all">
+                    <UserCheck size={15} className="shrink-0" />
+                    <div className="flex flex-col gap-0.5 text-left">
+                        <span className="text-[13px] font-medium leading-none">{claiming ? 'Claiming…' : 'Work on this'}</span>
+                        <span className="font-mono text-[10px] opacity-60">Mark yourself as the owner</span>
+                    </div>
+                </button>
+            )}
+
+            {isMine && (
+                <button disabled={claiming} onClick={() => doClaim('release')}
+                    className="w-full flex items-center gap-3 px-4 py-3 rounded-xl border border-[#D4D9FF] bg-[#D4D9FF]/20 text-[#4a5296] hover:bg-[#D4D9FF]/35 disabled:opacity-50 transition-all">
+                    <UserCheck size={15} className="shrink-0" />
+                    <div className="flex flex-col gap-0.5 text-left min-w-0">
+                        <span className="text-[13px] font-medium leading-none">Claimed by you</span>
+                        <span className="font-mono text-[10px] opacity-60 leading-snug truncate">{claiming ? 'Releasing…' : 'Click to release'}</span>
+                    </div>
+                    <UserMinus size={12} className="ml-auto shrink-0 opacity-60" />
+                </button>
+            )}
+
+            {isClaimedByOther && (
+                <div className="flex flex-col gap-0">
+                    <button disabled={claiming} onClick={() => setTakeOverOpen(o => !o)}
+                        className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all disabled:opacity-50
+                            ${takeOverOpen ? 'border-[#FF7900]/40 bg-[#FF7900]/08 text-[#FF7900]' : 'border-[#D4D9FF] bg-[#D4D9FF]/20 text-[#4a5296] hover:border-[#FF7900]/30'}`}>
+                        <UserCheck size={15} className="shrink-0" />
+                        <div className="flex flex-col gap-0.5 text-left min-w-0">
+                            <span className="text-[13px] font-medium leading-none">Claimed by {claimedBy.name}</span>
+                            <span className="font-mono text-[10px] opacity-60">Click to take over</span>
+                        </div>
+                        <UserCog size={12} className="ml-auto shrink-0 opacity-60" />
+                    </button>
+                    {takeOverOpen && (
+                        <div className="mt-1 rounded-xl border border-[#FF7900]/25 bg-[#FF7900]/04 p-3 flex flex-col gap-2.5">
+                            <p className="text-[12px] text-[#233B22] leading-relaxed">
+                                Take this over from <strong>{claimedBy.name}</strong>? They'll lose ownership and this will be logged.
+                            </p>
+                            <div className="flex gap-2 pt-1">
+                                <button onClick={() => setTakeOverOpen(false)}
+                                    className="flex-1 px-3 py-1.5 rounded-lg border border-[#C2E8DB] text-[#8A898C] text-[12px] font-mono hover:border-[#006825]/30">Cancel</button>
+                                <button disabled={claiming} onClick={() => doClaim('take_over')}
+                                    className="flex-1 px-3 py-1.5 rounded-lg bg-[#FF7900] text-white text-[12px] font-mono font-medium hover:bg-[#e06c00] disabled:opacity-40 disabled:cursor-not-allowed">
+                                    {claiming ? 'Saving…' : 'Take over'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
+        </div>
+    )
+
     const actionsPanel = (
         <div className="flex flex-col gap-3">
             {patchErr && <div className="flex items-center gap-2 bg-[#d93050]/10 border border-[#d93050]/20 rounded-lg px-3 py-2 text-[#d93050] text-[11px] font-mono"><AlertCircle size={12} /> {patchErr}</div>}
+            {claimBlock}
             <ActionButton active={isStarred} disabled={patching} onClick={() => patch({ starred: !isStarred })}
                 icon={<Star size={15} strokeWidth={isStarred ? 0 : 1.8} fill={isStarred ? 'currentColor' : 'none'} />}
                 label={isStarred ? 'Starred' : 'Star this grant'} hint={isStarred ? 'Click to remove' : 'Bookmark for quick retrieval'}
                 activeClass="border-[#d4a017] bg-[#fffbe6] text-[#d4a017]" />
-            <ActionButton active={isApplied} disabled={patching} onClick={() => patch({ applied: !isApplied })}
-                icon={<CheckCheck size={15} />}
-                label={isApplied ? 'Applied ✓' : 'Mark as Applied'} hint={isApplied ? 'Click to unmark' : "You've submitted an application"}
-                activeClass="border-[#006825]/50 bg-[#006825]/10 text-[#006825]" />
+            <StatusLadder
+                status={isApplied ? 'applied' : isReviewed ? 'reviewed' : 'relevant'}
+                disabled={patching}
+                onChange={setStatus}
+            />
 
             <div ref={discardRef} className="flex flex-col gap-0">
                 {isIgnored ? (
@@ -411,6 +512,7 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
                             { value: 'not_a_grant',       label: 'Not a grant opportunity' },
                             { value: 'deadline_passed',   label: 'Deadline already passed' },
                             { value: 'not_cash',          label: 'Not a cash grant' },
+                            { value: 'outside_scope',     label: 'Not our focus' },
                             { value: 'outside_geography', label: 'Outside our geography' },
                             { value: 'paywall',           label: 'Requires account / paywall' },
                             { value: 'other',             label: 'Other…' },
@@ -564,6 +666,49 @@ export default function GrantModal({ grant: initialGrant, onClose, onUpdate }) {
 }
 
 // Sub-components
+
+/**
+ * StatusLadder — a single 3-segment control for New / Reviewed / Applied.
+ * Rendered as one connected pill (not three stacked buttons) so it visually
+ * reads as "one status, pick a stage" rather than independent toggles —
+ * picking a segment always replaces the current status, it never combines.
+ * Discard/Ignore is intentionally not part of this — it's a separate branch
+ * with its own button + reason flow, not a rung on this ladder.
+ */
+function StatusLadder({ status, disabled, onChange }) {
+    const STAGES = [
+        { val: 'relevant', label: 'New',      hint: 'Not yet looked at' },
+        { val: 'reviewed', label: 'Reviewed', hint: "Looked over, not applied yet" },
+        { val: 'applied',  label: 'Applied',  hint: "You've submitted an application" },
+    ]
+    const activeIdx = STAGES.findIndex(s => s.val === status)
+
+    return (
+        <div className="flex flex-col gap-1.5">
+            <div className="flex rounded-xl border border-[#C2E8DB] bg-white p-1 gap-1">
+                {STAGES.map((s, i) => {
+                    const active = s.val === status
+                    return (
+                        <button key={s.val} disabled={disabled} onClick={() => onChange(s.val)}
+                            title={s.hint}
+                            className={`flex-1 flex items-center justify-center gap-1 px-2 py-2 rounded-lg text-[12px] font-medium transition-all disabled:opacity-50
+                                ${active
+                                    ? i === 2 ? 'bg-[#006825] text-white'
+                                      : i === 1 ? 'bg-[#072F98]/10 text-[#072F98] border border-[#072F98]/30'
+                                      : 'bg-[#C8EFE2] text-[#006825]'
+                                    : 'text-[#8A898C] hover:bg-[#C8EFE2]/40'}`}>
+                            {active && i > 0 && <CheckCheck size={11} className="shrink-0" />}
+                            {s.label}
+                        </button>
+                    )
+                })}
+            </div>
+            <p className="font-mono text-[10px] text-[#8A898C] text-center">
+                {STAGES[activeIdx]?.hint ?? ''}
+            </p>
+        </div>
+    )
+}
 
 function ActionButton({ active, onClick, disabled, icon, label, hint, activeClass }) {
     return (

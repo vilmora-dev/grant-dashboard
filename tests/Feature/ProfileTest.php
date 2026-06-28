@@ -2,6 +2,8 @@
 
 namespace Tests\Feature;
 
+use App\Models\GrantActionLog;
+use App\Models\GrantUnified;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -77,6 +79,69 @@ class ProfileTest extends TestCase
 
         $this->assertGuest();
         $this->assertNull($user->fresh());
+    }
+
+    public function test_user_with_claimed_grants_and_action_history_can_delete_their_account(): void
+    {
+        // Regression test: grant_action_logs.user_id FK must be nullOnDelete,
+        // not restrictOnDelete, so users with claimed-grant history can be deleted.
+        $user = User::factory()->create();
+        $userName = $user->name;
+        $grant = GrantUnified::factory()->create([
+            'claimed_by_user_id' => $user->id,
+            'claimed_at' => now(),
+        ]);
+
+        $log = GrantActionLog::create([
+            'grant_id' => $grant->id,
+            'user_id' => $user->id,
+            'action' => GrantActionLog::ACTION_CLAIMED,
+            'old_value' => null,
+            'new_value' => ['claimed_by_user_id' => $user->id],
+            'ip_address' => '127.0.0.1',
+            'user_agent' => 'phpunit',
+            'created_at' => now(),
+        ]);
+
+        $response = $this
+            ->actingAs($user)
+            ->delete('/profile', [
+                'password' => 'password',
+            ]);
+
+        $response
+            ->assertSessionHasNoErrors()
+            ->assertRedirect('/');
+
+        $this->assertGuest();
+        $this->assertNull($user->fresh());
+
+        // The grant itself survives, with the claim cleared (nullOnDelete on grants.claimed_by_user_id)
+        $this->assertNotNull($grant->fresh());
+        $this->assertNull($grant->fresh()->claimed_by_user_id);
+
+        // The audit log row survives too, now detached from the deleted user
+        // (nullOnDelete on grant_action_logs.user_id)
+        $this->assertNotNull($log->fresh());
+        $this->assertNull($log->fresh()->user_id);
+
+        // The user's name was snapshotted onto the log before deletion, so
+        // their history doesn't collapse into the generic "System" label
+        // alongside real scraper/AI rows (see GrantDataController::logs()).
+        $this->assertSame($userName, $log->fresh()->deleted_user_name);
+
+        // An admin viewing this grant's history sees the deleted user's name,
+        // not "System".
+        $admin = User::factory()->create(['role' => 'full']);
+        $logsResponse = $this
+            ->actingAs($admin)
+            ->getJson("/api/grants/{$grant->id}/logs");
+
+        $logsResponse->assertOk();
+        $returnedLog = collect($logsResponse->json('logs'))->firstWhere('id', $log->id);
+        $this->assertNotNull($returnedLog);
+        $this->assertSame("{$userName} (deleted)", $returnedLog['user_name']);
+        $this->assertFalse($returnedLog['is_me']);
     }
 
     public function test_correct_password_must_be_provided_to_delete_account(): void

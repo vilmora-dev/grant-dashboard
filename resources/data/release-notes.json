@@ -1,0 +1,25 @@
+[
+    {
+        "version": "2026.06.24",
+        "date": "2026-06-24",
+        "items": [
+            "Grants list now refreshes automatically every 20 seconds, so changes made by coworkers (claims, status moves, newly scraped grants) show up without a manual page reload. Pauses while a grant card is open or the tab is in the background.",
+            "Sped up the dashboard's status/claim counts by combining several separate database queries into two, and added database indexes on grant status fields — most noticeable on larger grant lists.",
+            "Fixed a bug where deleting your account would fail with a generic error page if you had ever claimed a grant or taken any other tracked action. Account deletion now works correctly in that case, and shows a clear message instead of a broken page if it ever can't complete.",
+            "Grant history now shows the name of a team member who has since deleted their account (e.g. \"Jane Doe (deleted)\") instead of attributing their past actions to \"System\".",
+            "Team members can now claim a grant to signal they're working on it, release it, or take over a grant claimed by someone else. Claimed grants show a badge on their card, and claim status (mine / available / claimed) is now filterable from the dashboard.",
+            "Added a Reviewed stage to the grant status ladder (New → Reviewed → Applied), plus a matching filter, count, and actions in the grant detail view.",
+            "Added an \"All\" option and a new filter sidebar with live counts for status, claim, source, deadline window, and minimum match score — replacing the old filter bar. The sidebar can be collapsed for more room and works as a slide-out drawer on mobile.",
+            "Renamed the \"Relevant\" status label to \"New\" throughout the dashboard and grant detail view for clarity.",
+            "Grants you've already claimed, reviewed, applied to, starred, or added notes to are no longer overwritten by the next scrape — only the scrape timestamp updates, so your work on a grant sticks.",
+            "Improved filtering of irrelevant scraped results (e.g. unrelated fishery grants) so fewer off-topic grants show up in the list."
+        ]
+    },
+    {
+        "version": "2026.05.21",
+        "date": "2026-05-21",
+        "items": [
+            "First production release of the grants dashboard on its new Laravel-based platform, migrated from the previous system. Includes user accounts, role-based access, team management, and forced password change on first login."
+        ]
+    }
+]

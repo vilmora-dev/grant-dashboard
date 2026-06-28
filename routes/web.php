@@ -24,6 +24,14 @@ Route::get('/dashboard', [GrantController::class, 'index'])
     ->middleware(['auth'])
     ->name('dashboard');
 
+// Release notes — informational, available to every authenticated user
+// (not gated behind full.access since there's nothing sensitive in it).
+Route::get('/release-notes', function () {
+    return Inertia::render('ReleaseNotes/Index', [
+        'releases' => json_decode(file_get_contents(resource_path('data/release-notes.json')), true),
+    ]);
+})->middleware(['auth'])->name('release-notes.index');
+
 // Full-access only pages
 Route::middleware(['auth', 'full.access'])->group(function () {
 

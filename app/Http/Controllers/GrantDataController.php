@@ -17,7 +17,10 @@ class GrantDataController extends Controller
     {
         $limit = (int) $request->query('limit', 500);
 
-        $grants = GrantUnified::orderByDesc('scraped_at')->limit($limit)->get();
+        $grants = GrantUnified::with('claimedBy:id,name')
+            ->orderByDesc('scraped_at')
+            ->limit($limit)
+            ->get();
 
         return response()->json([
             'grants' => $grants,
@@ -39,6 +42,7 @@ class GrantDataController extends Controller
         $data = $request->validate([
             'applied'        => 'sometimes|boolean',
             'ignore'         => 'sometimes|boolean',
+            'reviewed'       => 'sometimes|boolean',
             'starred'        => 'sometimes|boolean',
             'offers_cash'    => 'sometimes|boolean',
             'area_relevant'  => 'sometimes|boolean',
@@ -79,6 +83,97 @@ class GrantDataController extends Controller
     }
 
     /**
+     * POST /api/grants/{id}/claim
+     *
+     * Body: { "action": "claim" | "release" | "take_over" }
+     *
+     * "I'm working on this" tracking. Three behaviors:
+     *  - claim:     succeeds only if the grant is currently unclaimed.
+     *               Rejected with 409 if someone else already holds it.
+     *  - release:   succeeds only if the requesting user is the current claimant.
+     *  - take_over: succeeds unconditionally — deliberately reassigns the claim
+     *               away from whoever currently holds it (including no one).
+     *               This is the explicit "I know someone else has this" action,
+     *               distinct from a plain claim so it never happens by accident.
+     */
+    public function claimGrant(Request $request, int $id): JsonResponse
+    {
+        $grant = GrantUnified::findOrFail($id);
+        $user  = $request->user();
+
+        $validated = $request->validate([
+            'action' => 'required|in:claim,release,take_over',
+        ]);
+        $action = $validated['action'];
+
+        $previousUserId = $grant->claimed_by_user_id;
+
+        if ($action === 'claim') {
+            if ($previousUserId !== null && $previousUserId !== $user->id) {
+                $claimant = $grant->claimedBy;
+                return response()->json([
+                    'error'        => 'already_claimed',
+                    'message'      => 'Already claimed by ' . ($claimant?->name ?? 'another user') . '.',
+                    'claimed_by'   => $claimant?->only(['id', 'name']),
+                ], 409);
+            }
+
+            if ($previousUserId === $user->id) {
+                // Already claimed by the same user — no-op, nothing to log.
+                return response()->json($grant->fresh()->load('claimedBy'));
+            }
+
+            $grant->update([
+                'claimed_by_user_id' => $user->id,
+                'claimed_at'         => now(),
+            ]);
+            $logAction = GrantActionLog::ACTION_CLAIMED;
+            $oldValue  = ['claimed_by_user_id' => null];
+            $newValue  = ['claimed_by_user_id' => $user->id, 'user_name' => $user->name];
+
+        } elseif ($action === 'release') {
+            if ($previousUserId !== $user->id) {
+                return response()->json([
+                    'error'   => 'not_claimant',
+                    'message' => 'You can only release a grant you currently have claimed.',
+                ], 409);
+            }
+
+            $grant->update([
+                'claimed_by_user_id' => null,
+                'claimed_at'         => null,
+            ]);
+            $logAction = GrantActionLog::ACTION_UNCLAIMED;
+            $oldValue  = ['claimed_by_user_id' => $previousUserId, 'user_name' => $user->name];
+            $newValue  = ['claimed_by_user_id' => null];
+
+        } else { // take_over
+            $previousClaimant = $grant->claimedBy;
+
+            $grant->update([
+                'claimed_by_user_id' => $user->id,
+                'claimed_at'         => now(),
+            ]);
+            $logAction = GrantActionLog::ACTION_REASSIGNED;
+            $oldValue  = ['claimed_by_user_id' => $previousUserId, 'user_name' => $previousClaimant?->name];
+            $newValue  = ['claimed_by_user_id' => $user->id, 'user_name' => $user->name];
+        }
+
+        GrantActionLog::create([
+            'grant_id'   => $grant->id,
+            'user_id'    => $user->id,
+            'action'     => $logAction,
+            'old_value'  => $oldValue,
+            'new_value'  => $newValue,
+            'ip_address' => $request->ip(),
+            'user_agent' => substr($request->userAgent() ?? '', 0, 300),
+            'created_at' => now(),
+        ]);
+
+        return response()->json($grant->fresh()->load('claimedBy'));
+    }
+
+    /**
      * GET /api/grants/{id}/logs
      *
      * Returns the action log for a single grant.
@@ -104,7 +199,9 @@ class GrantDataController extends Controller
             'action'     => $log->action,
             'old_value'  => $log->old_value,
             'new_value'  => $log->new_value,
-            'user_name'  => $log->user?->name ?? 'System',
+            'user_name'  => $log->user?->name
+                ?? ($log->deleted_user_name ? "{$log->deleted_user_name} (deleted)" : null)
+                ?? ($log->action === GrantActionLog::ACTION_SCRAPED ? 'Scraper Agent' : 'System'),
             'is_me'      => $log->user_id === $user->id,
             'created_at' => $log->created_at->toISOString(),
         ]);

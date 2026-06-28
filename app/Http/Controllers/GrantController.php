@@ -15,24 +15,31 @@ class GrantController extends Controller
      *
      * Query params:
      *   page             int     default 1
-     *   status           string  relevant|applied|ignored   default relevant
+     *   status           string  all|relevant|applied|ignored|reviewed   default all
      *   source           string  all|grants_gov|web|…       default all
      *   sort             string  match|newest|deadline|amount|title|source  default match
      *   search           string  full-text on title+description+eligibility+agency_name
      *   starred          bool    1 = only starred
      *   min_score        int     0–100, default 0 (no filter)
      *   deadline_window  string  any|week|month|expired  default any
+     *   claim            string  any|mine|available|claimed  default any
+     *   exclude_mine     bool    1 = when claim=claimed, exclude grants claimed by me
      */
     public function index(Request $request)
     {
-        $q = GrantUnified::query();
+        $q = GrantUnified::query()->with('claimedBy:id,name');
 
         // ── Status ───────────────────────────────────────────────────────
-        $status = $request->query('status', 'relevant');
+        $status = $request->query('status', 'all');
         match ($status) {
-            'applied' => $q->where('applied', true),
-            'ignored' => $q->where('ignore', true),
-            default   => $q->where('ignore', false)->where('applied', false),
+            'all'      => null, // frontend-only bucket — no filter applied
+            'applied'  => $q->where('applied', true),
+            'ignored'  => $q->where('ignore', true),
+            'reviewed' => $q->where('reviewed', true),
+            // "New" = hasn't moved anywhere on the ladder yet, and hasn't
+            // been discarded. Must exclude reviewed=true too, otherwise a
+            // grant moved to Reviewed still shows up (and counts) as New.
+            default    => $q->where('ignore', false)->where('applied', false)->where('reviewed', false),
         };
 
         // ── Source / scrape_method filter ─────────────────────────────────
@@ -49,6 +56,21 @@ class GrantController extends Controller
         if (filter_var($request->query('starred'), FILTER_VALIDATE_BOOLEAN)) {
             $q->where('starred', true);
         }
+
+        // ── Claim status ─────────────────────────────────────────────────
+        // any (default) | mine | available | claimed
+        // exclude_mine only has an effect when claim=claimed: it removes
+        // grants claimed by the current user from that "claimed" list.
+        $userId      = $request->user()?->id;
+        $claim       = $request->query('claim', 'any');
+        $excludeMine = filter_var($request->query('exclude_mine'), FILTER_VALIDATE_BOOLEAN);
+        match ($claim) {
+            'mine'      => $q->where('claimed_by_user_id', $userId),
+            'available' => $q->whereNull('claimed_by_user_id'),
+            'claimed'   => $q->whereNotNull('claimed_by_user_id')
+                              ->when($excludeMine && $userId, fn ($sub) => $sub->where('claimed_by_user_id', '!=', $userId)),
+            default     => null,
+        };
 
         // ── Min relevance score ───────────────────────────────────────────
         $minScore = max(0, min(100, (int) $request->query('min_score', 0)));
@@ -121,11 +143,37 @@ class GrantController extends Controller
             default    => $q->orderByDesc('relevance_score')->orderByDesc('scraped_at'),
         };
 
-        // ── Counts (always over full table, not filtered) ─────────────────
-        $totalInDb    = GrantUnified::count();
-        $relevantCnt  = GrantUnified::where('ignore', false)->where('applied', false)->count();
-        $appliedCnt   = GrantUnified::where('applied', true)->count();
-        $ignoredCnt   = GrantUnified::where('ignore', true)->count();
+        // Counts (always over full table, not filtered)
+        // Collapsed into two conditional-aggregation queries instead of one
+        // COUNT(*) per bucket - this endpoint is now polled every 20s per
+        // open tab (see the auto-refresh effect in Grants/Index.jsx), so the
+        // per-request query count matters more than it used to.
+        $statusCounts = GrantUnified::selectRaw("
+            COUNT(*) as total,
+            SUM(`ignore` = 0 AND applied = 0 AND reviewed = 0) as relevant,
+            SUM(applied = 1) as applied,
+            SUM(`ignore` = 1) as `ignored`,
+            SUM(reviewed = 1) as reviewed
+        ")->first();
+
+        $totalInDb   = (int) $statusCounts->total;
+        $relevantCnt = (int) $statusCounts->relevant;
+        $appliedCnt  = (int) $statusCounts->applied;
+        $ignoredCnt  = (int) $statusCounts->ignored;
+        $reviewedCnt = (int) $statusCounts->reviewed;
+
+        // Bind a sentinel (-1) when logged out so the query shape never
+        // changes - claimed_by_user_id is never -1, so "mine" just comes
+        // back 0 for guests instead of needing a second query branch.
+        $claimCounts = GrantUnified::selectRaw('
+            SUM(claimed_by_user_id IS NOT NULL) as claimed,
+            SUM(claimed_by_user_id IS NULL) as available,
+            SUM(claimed_by_user_id = ?) as mine
+        ', [$userId ?? -1])->first();
+
+        $claimedCnt   = (int) $claimCounts->claimed;
+        $availableCnt = (int) $claimCounts->available;
+        $mineCnt      = (int) $claimCounts->mine;
 
         // ── Distinct sources actually in DB (for the source dropdown) ─────
         $presentSources = GrantUnified::select('source')
@@ -156,10 +204,14 @@ class GrantController extends Controller
                 'to'           => $paginated->lastItem()  ?? 0,
             ],
             'counts' => [
-                'total'    => $totalInDb,
-                'relevant' => $relevantCnt,
-                'applied'  => $appliedCnt,
-                'ignored'  => $ignoredCnt,
+                'total'     => $totalInDb,
+                'relevant'  => $relevantCnt,
+                'applied'   => $appliedCnt,
+                'ignored'   => $ignoredCnt,
+                'reviewed'  => $reviewedCnt,
+                'mine'      => $mineCnt,
+                'available' => $availableCnt,
+                'claimed'   => $claimedCnt,
             ],
             'presentSources' => $presentSources,
             'filters' => [
@@ -170,6 +222,8 @@ class GrantController extends Controller
                 'starred'        => filter_var($request->query('starred'), FILTER_VALIDATE_BOOLEAN),
                 'min_score'      => $minScore,
                 'deadline_window' => $deadlineWindow,
+                'claim'          => $claim,
+                'exclude_mine'   => $excludeMine,
             ],
         ]);
     }

@@ -13,6 +13,7 @@ class GrantActionLog extends Model
     protected $fillable = [
         'grant_id',
         'user_id',
+        'deleted_user_name',
         'action',
         'old_value',
         'new_value',
@@ -34,6 +35,8 @@ class GrantActionLog extends Model
     const ACTION_UNSTARRED      = 'unstarred';
     const ACTION_APPLIED        = 'applied';
     const ACTION_UNAPPLIED      = 'unapplied';
+    const ACTION_REVIEWED       = 'reviewed';      // marked as looked-over, short of Applied
+    const ACTION_UNREVIEWED     = 'unreviewed';
     const ACTION_DISCARDED      = 'discarded';
     const ACTION_RESTORED       = 'restored';
     const ACTION_NOTES_UPDATED  = 'notes_updated';
@@ -43,6 +46,9 @@ class GrantActionLog extends Model
     const ACTION_UPDATED        = 'updated';       // multi-field patch fallback
     const ACTION_SCRAPED        = 'scraped';       // written by the scraper pipeline
     const ACTION_AI_ANALYZED    = 'ai_analyzed';   // written by the AI pipeline
+    const ACTION_CLAIMED        = 'claimed';       // user claimed (started working) a grant
+    const ACTION_UNCLAIMED      = 'unclaimed';     // user released a grant they had claimed
+    const ACTION_REASSIGNED     = 'reassigned';    // claim was taken over from another user
 
     // ── Long-text fields that get truncated in the log ────────────────────────
     // These fields already live in full on the grants row; the log only needs
@@ -98,6 +104,7 @@ class GrantActionLog extends Model
             return match (true) {
                 $key === 'starred'        => $val ? self::ACTION_STARRED         : self::ACTION_UNSTARRED,
                 $key === 'applied'        => $val ? self::ACTION_APPLIED          : self::ACTION_UNAPPLIED,
+                $key === 'reviewed'       => $val ? self::ACTION_REVIEWED         : self::ACTION_UNREVIEWED,
                 $key === 'ignore'         => $val ? self::ACTION_DISCARDED        : self::ACTION_RESTORED,
                 $key === 'notes'          => self::ACTION_NOTES_UPDATED,
                 $key === 'amount'         => self::ACTION_AMOUNT_EDITED,
@@ -110,6 +117,19 @@ class GrantActionLog extends Model
         // ignore + discard_reason arrive together — treat as a single discard
         if (isset($data['ignore'], $data['discard_reason']) && $data['ignore']) {
             return self::ACTION_DISCARDED;
+        }
+
+        if (array_key_exists('applied', $data) && $data['applied'] === true) {
+            return self::ACTION_APPLIED;
+        }
+        if (array_key_exists('reviewed', $data) && $data['reviewed'] === true) {
+            return self::ACTION_REVIEWED;
+        }
+        if (
+            array_key_exists('applied', $data) && $data['applied'] === false
+            && array_key_exists('reviewed', $data) && $data['reviewed'] === false
+        ) {
+            return self::ACTION_UNAPPLIED;
         }
 
         return self::ACTION_UPDATED;
